@@ -8,59 +8,161 @@ interface HandAnimationProps {
   currentPose?: HandPose;
 }
 
+interface FingerRig {
+  root: THREE.Group;   // proximal pivot
+  distal: THREE.Group; // distal pivot
+}
+
 function createHand(side: 'right' | 'left'): {
   handGroup: THREE.Group;
-  fingerGroups: THREE.Group[];
+  fingerRigs: FingerRig[];
 } {
   const handGroup = new THREE.Group();
-  const fingerGroups: THREE.Group[] = [];
+  const fingerRigs: FingerRig[] = [];
 
-  const skinMaterial = new THREE.MeshLambertMaterial({ color: 0xf0c8a0 });
-  const jointMaterial = new THREE.MeshLambertMaterial({ color: 0xe0b890 });
-
-  // Palm
-  const palmGeometry = new THREE.BoxGeometry(1.2, 0.3, 1.4);
-  const palm = new THREE.Mesh(palmGeometry, skinMaterial);
-  palm.castShadow = true;
-  handGroup.add(palm);
-
-  // Finger configs: [name, xOffset, zOffset, length, thickness, isThumb]
-  const fingerConfigs: [string, number, number, number, number, boolean][] = [
-    ['thumb', 0.55, 0.5, 0.7, 0.22, true],
-    ['index', 0, -0.4, 0.9, 0.18, false],
-    ['middle', 0, -0.1, 0.95, 0.18, false],
-    ['ringPinky', 0, 0.25, 0.85, 0.22, false],
-  ];
+  // --- Materials (industrial robotic look) ---
+  const frameMaterial = new THREE.MeshStandardMaterial({
+    color: 0x2a2a2a,
+    metalness: 0.3,
+    roughness: 0.6,
+  });
+  const jointMaterial = new THREE.MeshStandardMaterial({
+    color: 0x888888,
+    metalness: 0.6,
+    roughness: 0.3,
+  });
+  const servoMaterial = new THREE.MeshStandardMaterial({
+    color: 0x1a6dd4,
+    metalness: 0.2,
+    roughness: 0.5,
+  });
+  const shellMaterial = new THREE.MeshStandardMaterial({
+    color: 0x3a3a3a,
+    metalness: 0.1,
+    roughness: 0.7,
+  });
+  const tipMaterial = new THREE.MeshStandardMaterial({
+    color: 0x555555,
+    metalness: 0.1,
+    roughness: 0.8,
+  });
 
   const mirror = side === 'left' ? -1 : 1;
 
-  for (const [, xOffset, zOffset, length, thickness, isThumb] of fingerConfigs) {
-    const pivot = new THREE.Group();
+  // --- Palm (compact, hand-shaped) ---
+  // Main palm body — narrower and shorter
+  const palmGeometry = new THREE.BoxGeometry(0.85, 0.25, 0.9);
+  const palm = new THREE.Mesh(palmGeometry, frameMaterial);
+  palm.castShadow = true;
+  handGroup.add(palm);
+
+  // Thin top plate (shell cover on palm front)
+  const topPlateGeo = new THREE.BoxGeometry(0.8, 0.04, 0.85);
+  const topPlate = new THREE.Mesh(topPlateGeo, shellMaterial);
+  topPlate.position.set(0, 0.14, -0.02);
+  handGroup.add(topPlate);
+
+  // Servo housings recessed into palm back (2 small boxes, subtle)
+  const servoGeo = new THREE.BoxGeometry(0.15, 0.08, 0.22);
+  const servo1 = new THREE.Mesh(servoGeo, servoMaterial);
+  servo1.position.set(-0.18, -0.16, -0.12);
+  servo1.castShadow = true;
+  handGroup.add(servo1);
+  const servo2 = new THREE.Mesh(servoGeo, servoMaterial);
+  servo2.position.set(0.18, -0.16, -0.12);
+  servo2.castShadow = true;
+  handGroup.add(servo2);
+
+  // Wrist mount cylinder at palm base
+  const wristGeo = new THREE.CylinderGeometry(0.2, 0.24, 0.2, 16);
+  const wrist = new THREE.Mesh(wristGeo, frameMaterial);
+  wrist.position.set(0, -0.05, 0.55);
+  wrist.castShadow = true;
+  handGroup.add(wrist);
+
+  // Wrist accent ring
+  const wristRingGeo = new THREE.TorusGeometry(0.22, 0.025, 8, 16);
+  const wristRing = new THREE.Mesh(wristRingGeo, jointMaterial);
+  wristRing.position.set(0, -0.05, 0.45);
+  wristRing.rotation.x = Math.PI / 2;
+  handGroup.add(wristRing);
+
+  // --- Finger configs (scaled to palm) ---
+  // [xOffset, zOffset, proximalLength, distalLength, radius, isThumb]
+  const fingerConfigs: [number, number, number, number, number, boolean][] = [
+    [0.42, 0.25, 0.55, 0.4, 0.08, true],     // thumb — side of palm
+    [0.0, -0.35, 0.65, 0.45, 0.065, false],   // index
+    [0.0, -0.12, 0.7, 0.48, 0.065, false],    // middle
+    [0.0, 0.12, 0.6, 0.42, 0.08, false],      // ringPinky (wider, combined)
+  ];
+
+  for (const [xOffset, zOffset, proxLen, distLen, radius, isThumb] of fingerConfigs) {
+    // Root pivot group (proximal)
+    const fingerRoot = new THREE.Group();
 
     if (isThumb) {
-      // Thumb attaches to the side of the palm
-      pivot.position.set(xOffset * mirror, 0, zOffset);
-      pivot.rotation.z = (mirror * -Math.PI) / 6; // angle outward
+      fingerRoot.position.set(xOffset * mirror, 0, zOffset);
+      fingerRoot.rotation.z = (mirror * -Math.PI) / 6;
     } else {
-      // Fingers attach to the top edge of the palm
-      pivot.position.set(xOffset * mirror, 0.15, zOffset);
+      fingerRoot.position.set(xOffset * mirror, 0.125, zOffset);
     }
 
-    // Finger segment inside the pivot, extending upward from pivot point
-    const segGeometry = new THREE.BoxGeometry(thickness, length, thickness);
-    const segment = new THREE.Mesh(segGeometry, skinMaterial);
-    segment.position.y = length / 2;
-    segment.castShadow = true;
-    pivot.add(segment);
+    // Knuckle ball joint
+    const knuckleGeo = new THREE.SphereGeometry(radius * 1.4, 12, 12);
+    const knuckle = new THREE.Mesh(knuckleGeo, jointMaterial);
+    knuckle.castShadow = true;
+    fingerRoot.add(knuckle);
 
-    // Small joint sphere at the tip
-    const jointGeometry = new THREE.SphereGeometry(thickness * 0.55, 8, 8);
-    const joint = new THREE.Mesh(jointGeometry, jointMaterial);
-    joint.position.y = length;
-    pivot.add(joint);
+    // Proximal bone (cylinder segment)
+    const proxGeo = new THREE.CylinderGeometry(radius, radius * 0.9, proxLen, 10);
+    const proxBone = new THREE.Mesh(proxGeo, frameMaterial);
+    proxBone.position.y = proxLen / 2;
+    proxBone.castShadow = true;
+    fingerRoot.add(proxBone);
 
-    handGroup.add(pivot);
-    fingerGroups.push(pivot);
+    // Linkage bar alongside proximal bone (thin rod - mechanical visual)
+    const linkageGeo = new THREE.CylinderGeometry(0.015, 0.015, proxLen * 0.85, 4);
+    const linkage = new THREE.Mesh(linkageGeo, jointMaterial);
+    linkage.position.set(radius * 1.3, proxLen * 0.45, 0);
+    fingerRoot.add(linkage);
+
+    // Small linkage connector spheres at top and bottom of linkage
+    const linkConnGeo = new THREE.SphereGeometry(0.025, 6, 6);
+    const linkConn1 = new THREE.Mesh(linkConnGeo, jointMaterial);
+    linkConn1.position.set(radius * 1.3, proxLen * 0.05, 0);
+    fingerRoot.add(linkConn1);
+    const linkConn2 = new THREE.Mesh(linkConnGeo, jointMaterial);
+    linkConn2.position.set(radius * 1.3, proxLen * 0.85, 0);
+    fingerRoot.add(linkConn2);
+
+    // Mid-finger ball joint
+    const midJointGeo = new THREE.SphereGeometry(radius * 1.2, 12, 12);
+    const midJoint = new THREE.Mesh(midJointGeo, jointMaterial);
+    midJoint.position.y = proxLen;
+    fingerRoot.add(midJoint);
+
+    // Distal group (pivots at mid-finger joint)
+    const distalGroup = new THREE.Group();
+    distalGroup.position.y = proxLen;
+
+    // Distal bone (cylinder segment)
+    const distGeo = new THREE.CylinderGeometry(radius * 0.85, radius * 0.75, distLen, 10);
+    const distBone = new THREE.Mesh(distGeo, frameMaterial);
+    distBone.position.y = distLen / 2;
+    distBone.castShadow = true;
+    distalGroup.add(distBone);
+
+    // Fingertip (rounded sphere)
+    const tipGeo = new THREE.SphereGeometry(radius * 0.9, 10, 10);
+    const tip = new THREE.Mesh(tipGeo, tipMaterial);
+    tip.position.y = distLen;
+    tip.castShadow = true;
+    distalGroup.add(tip);
+
+    fingerRoot.add(distalGroup);
+    handGroup.add(fingerRoot);
+
+    fingerRigs.push({ root: fingerRoot, distal: distalGroup });
   }
 
   // Mirror the left hand
@@ -68,14 +170,14 @@ function createHand(side: 'right' | 'left'): {
     handGroup.scale.x = -1;
   }
 
-  return { handGroup, fingerGroups };
+  return { handGroup, fingerRigs };
 }
 
 export function HandAnimation({ currentPose }: HandAnimationProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const fingerGroupsRef = useRef<{ right: THREE.Group[]; left: THREE.Group[] }>({
+  const fingerRigsRef = useRef<{ right: FingerRig[]; left: FingerRig[] }>({
     right: [],
     left: [],
   });
@@ -123,32 +225,32 @@ export function HandAnimation({ currentPose }: HandAnimationProps) {
     window.addEventListener('resize', handleResize);
     handleResize();
 
-    // Lighting
-    const ambient = new THREE.AmbientLight(0x606070, 0.6);
+    // Lighting — enhanced for metallic materials
+    const ambient = new THREE.AmbientLight(0x606070, 0.8);
     scene.add(ambient);
 
-    const directional = new THREE.DirectionalLight(0xffffff, 0.9);
+    const directional = new THREE.DirectionalLight(0xffffff, 1.0);
     directional.position.set(5, 8, 5);
     directional.castShadow = true;
     scene.add(directional);
 
-    const fillLight = new THREE.DirectionalLight(0x8888ff, 0.3);
+    const fillLight = new THREE.DirectionalLight(0x8888ff, 0.4);
     fillLight.position.set(-3, 2, -3);
     scene.add(fillLight);
 
     // Build hands
-    const { handGroup: rightHand, fingerGroups: rightFingers } = createHand('right');
+    const { handGroup: rightHand, fingerRigs: rightRigs } = createHand('right');
     rightHand.position.set(0, 0, 0);
     scene.add(rightHand);
     rightHandRef.current = rightHand;
-    fingerGroupsRef.current.right = rightFingers;
+    fingerRigsRef.current.right = rightRigs;
 
-    const { handGroup: leftHand, fingerGroups: leftFingers } = createHand('left');
+    const { handGroup: leftHand, fingerRigs: leftRigs } = createHand('left');
     leftHand.position.set(-1.8, 0, 0);
     leftHand.visible = false;
     scene.add(leftHand);
     leftHandRef.current = leftHand;
-    fingerGroupsRef.current.left = leftFingers;
+    fingerRigsRef.current.left = leftRigs;
 
     // Animation loop
     const animate = () => {
@@ -184,11 +286,13 @@ export function HandAnimation({ currentPose }: HandAnimationProps) {
       rightHand.visible = true;
       rightHand.position.set(0, 0, 0);
       leftHand.visible = false;
-      fingerGroupsRef.current.right.forEach((group, i) => {
+      fingerRigsRef.current.right.forEach((rig, i) => {
         if (i === 0) {
-          group.rotation.z = -Math.PI / 6; // thumb resting angle
+          rig.root.rotation.z = -Math.PI / 6; // thumb resting angle
+          rig.distal.rotation.x = 0;
         } else {
-          group.rotation.x = 0;
+          rig.root.rotation.x = 0;
+          rig.distal.rotation.x = 0;
         }
       });
       return;
@@ -212,23 +316,27 @@ export function HandAnimation({ currentPose }: HandAnimationProps) {
       leftHand.position.set(-0.9, 0, 0);
     }
 
-    const applyServos = (servos: readonly [number, number, number, number], groups: THREE.Group[]) => {
+    const applyServos = (servos: readonly [number, number, number, number], rigs: FingerRig[]) => {
       servos.forEach((val, i) => {
-        const angle = -(val / 180) * (Math.PI / 2);
+        const proxAngle = -(val / 180) * (Math.PI / 2);
+        const distalAngle = proxAngle * 0.5; // synchronized linkage: distal follows at 50%
+
         if (i === 0) {
           // Thumb curls on z-axis
-          groups[i].rotation.z = -Math.PI / 6 + angle;
+          rigs[i].root.rotation.z = -Math.PI / 6 + proxAngle;
+          rigs[i].distal.rotation.z = distalAngle;
         } else {
-          groups[i].rotation.x = angle;
+          rigs[i].root.rotation.x = proxAngle;
+          rigs[i].distal.rotation.x = distalAngle;
         }
       });
     };
 
     if ((hand === 'right' || hand === 'both') && currentPose.right) {
-      applyServos(currentPose.right, fingerGroupsRef.current.right);
+      applyServos(currentPose.right, fingerRigsRef.current.right);
     }
     if ((hand === 'left' || hand === 'both') && currentPose.left) {
-      applyServos(currentPose.left, fingerGroupsRef.current.left);
+      applyServos(currentPose.left, fingerRigsRef.current.left);
     }
   }, [currentPose]);
 
