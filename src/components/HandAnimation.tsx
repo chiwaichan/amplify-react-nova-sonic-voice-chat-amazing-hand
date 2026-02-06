@@ -79,11 +79,13 @@ function createHand(side: 'right' | 'left'): {
 
   // --- Finger configs (scaled to palm) ---
   // [xOffset, zOffset, proximalLength, distalLength, radius, isThumb]
+  // Fingers placed around the bowl rim (y=0.15, rim radius ~0.5)
+  // [xOffset, zOffset, proximalLength, distalLength, radius, isThumb]
   const fingerConfigs: [number, number, number, number, number, boolean][] = [
-    [0.42, 0.25, 0.55, 0.4, 0.08, true],     // thumb — side of palm
-    [0.0, -0.35, 0.65, 0.45, 0.065, false],   // index
-    [0.0, -0.12, 0.7, 0.48, 0.065, false],    // middle
-    [0.0, 0.12, 0.6, 0.42, 0.08, false],      // ringPinky (wider, combined)
+    [0.45, 0.28, 0.55, 0.4, 0.08, true],      // thumb — side of bowl
+    [0.3, -0.38, 0.65, 0.45, 0.065, false],    // index — front-left of rim
+    [0.0, -0.5, 0.7, 0.48, 0.065, false],      // middle — front center of rim
+    [-0.3, -0.38, 0.6, 0.42, 0.08, false],     // ringPinky — front-right of rim
   ];
 
   for (const [xOffset, zOffset, proxLen, distLen, radius, isThumb] of fingerConfigs) {
@@ -94,7 +96,7 @@ function createHand(side: 'right' | 'left'): {
       fingerRoot.position.set(xOffset * mirror, 0, zOffset);
       fingerRoot.rotation.z = (mirror * -Math.PI) / 6;
     } else {
-      fingerRoot.position.set(xOffset * mirror, 0.125, zOffset);
+      fingerRoot.position.set(xOffset * mirror, 0.15, zOffset);
     }
 
     // Knuckle ball joint
