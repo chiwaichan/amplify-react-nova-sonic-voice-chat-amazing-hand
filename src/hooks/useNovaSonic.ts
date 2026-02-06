@@ -383,6 +383,51 @@ export function useNovaSonic(options: UseNovaSonicOptions = {}): UseNovaSonicRet
             const contentId = toolUseData.contentName || generateUUID();
 
             if (onToolUse) {
+              const sendToolResult = (resultContent: string) => {
+                const resultContentName = generateUUID();
+
+                // 1. contentStart with TOOL_RESULT type
+                pushEvent({
+                  event: {
+                    contentStart: {
+                      promptName: promptNameRef.current,
+                      contentName: resultContentName,
+                      type: 'TOOL',
+                      interactive: false,
+                      role: 'TOOL',
+                      toolResultInputConfiguration: {
+                        toolUseId,
+                        type: 'TEXT',
+                        textInputConfiguration: {
+                          mediaType: 'text/plain',
+                        },
+                      },
+                    },
+                  },
+                });
+
+                // 2. toolResult with the result
+                pushEvent({
+                  event: {
+                    toolResult: {
+                      promptName: promptNameRef.current,
+                      contentName: resultContentName,
+                      content: resultContent,
+                    },
+                  },
+                });
+
+                // 3. contentEnd
+                pushEvent({
+                  event: {
+                    contentEnd: {
+                      promptName: promptNameRef.current,
+                      contentName: resultContentName,
+                    },
+                  },
+                });
+              };
+
               try {
                 const toolEvent: ToolUseEvent = {
                   toolUseId,
@@ -393,32 +438,11 @@ export function useNovaSonic(options: UseNovaSonicOptions = {}): UseNovaSonicRet
                 };
 
                 const result = await onToolUse(toolEvent);
-
-                // Send tool result back as a single toolResult event (Nova 2 Sonic format)
-                pushEvent({
-                  event: {
-                    toolResult: {
-                      promptName: promptNameRef.current,
-                      contentName: contentId,
-                      content: result,
-                    },
-                  },
-                });
-
+                sendToolResult(result);
                 log(`[${sid}] Tool result sent for ${toolName}`);
               } catch (err: any) {
                 log(`[${sid}] Tool use error:`, err);
-
-                // Send error tool result
-                pushEvent({
-                  event: {
-                    toolResult: {
-                      promptName: promptNameRef.current,
-                      contentName: contentId,
-                      content: JSON.stringify({ error: err?.message || 'Tool execution failed' }),
-                    },
-                  },
-                });
+                sendToolResult(JSON.stringify({ error: err?.message || 'Tool execution failed' }));
               }
             }
           }
