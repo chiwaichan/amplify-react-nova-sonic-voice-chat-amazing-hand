@@ -394,43 +394,13 @@ export function useNovaSonic(options: UseNovaSonicOptions = {}): UseNovaSonicRet
 
                 const result = await onToolUse(toolEvent);
 
-                // Send tool result back
-                const toolResultContentName = generateUUID();
-
+                // Send tool result back as a single toolResult event (Nova 2 Sonic format)
                 pushEvent({
                   event: {
-                    contentStart: {
+                    toolResult: {
                       promptName: promptNameRef.current,
-                      contentName: toolResultContentName,
-                      type: 'TOOL_RESULT',
-                      interactive: true,
-                      role: 'TOOL',
-                      toolResultInputConfiguration: {
-                        toolUseId,
-                        type: 'TEXT',
-                        textInputConfiguration: {
-                          mediaType: 'text/plain',
-                        },
-                      },
-                    },
-                  },
-                });
-
-                pushEvent({
-                  event: {
-                    textInput: {
-                      promptName: promptNameRef.current,
-                      contentName: toolResultContentName,
+                      contentName: contentId,
                       content: result,
-                    },
-                  },
-                });
-
-                pushEvent({
-                  event: {
-                    contentEnd: {
-                      promptName: promptNameRef.current,
-                      contentName: toolResultContentName,
                     },
                   },
                 });
@@ -440,43 +410,12 @@ export function useNovaSonic(options: UseNovaSonicOptions = {}): UseNovaSonicRet
                 log(`[${sid}] Tool use error:`, err);
 
                 // Send error tool result
-                const errorContentName = generateUUID();
-
                 pushEvent({
                   event: {
-                    contentStart: {
+                    toolResult: {
                       promptName: promptNameRef.current,
-                      contentName: errorContentName,
-                      type: 'TOOL_RESULT',
-                      interactive: true,
-                      role: 'TOOL',
-                      toolResultInputConfiguration: {
-                        toolUseId,
-                        type: 'TEXT',
-                        status: 'error',
-                        textInputConfiguration: {
-                          mediaType: 'text/plain',
-                        },
-                      },
-                    },
-                  },
-                });
-
-                pushEvent({
-                  event: {
-                    textInput: {
-                      promptName: promptNameRef.current,
-                      contentName: errorContentName,
+                      contentName: contentId,
                       content: JSON.stringify({ error: err?.message || 'Tool execution failed' }),
-                    },
-                  },
-                });
-
-                pushEvent({
-                  event: {
-                    contentEnd: {
-                      promptName: promptNameRef.current,
-                      contentName: errorContentName,
                     },
                   },
                 });

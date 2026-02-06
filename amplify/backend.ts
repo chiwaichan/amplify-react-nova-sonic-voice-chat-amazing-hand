@@ -1,10 +1,14 @@
 import { defineBackend } from '@aws-amplify/backend';
 import { auth } from './auth/resource';
 import { PolicyStatement, Effect } from 'aws-cdk-lib/aws-iam';
+import { Stack } from 'aws-cdk-lib';
+import { CfnPolicy } from 'aws-cdk-lib/aws-iot';
 
 const backend = defineBackend({
   auth,
 });
+
+const authStack = Stack.of(backend.auth.resources.authenticatedUserIamRole);
 
 // Grant authenticated users permission to invoke Nova Sonic via Bedrock
 backend.auth.resources.authenticatedUserIamRole.addToPrincipalPolicy(
@@ -21,14 +25,44 @@ backend.auth.resources.authenticatedUserIamRole.addToPrincipalPolicy(
   })
 );
 
-// Grant authenticated users permission to publish to IoT Core
+// Grant authenticated users IAM permissions for IoT publish + policy attachment
 backend.auth.resources.authenticatedUserIamRole.addToPrincipalPolicy(
   new PolicyStatement({
     effect: Effect.ALLOW,
     actions: ['iot:Publish', 'iot:Connect'],
     resources: [
-      'arn:aws:iot:us-east-1:*:topic/amazing-hand/*',
-      'arn:aws:iot:us-east-1:*:client/*',
+      `arn:aws:iot:us-east-1:${authStack.account}:topic/amazing-hand/*`,
+      `arn:aws:iot:us-east-1:${authStack.account}:client/*`,
     ],
   })
 );
+
+// Allow authenticated users to attach the IoT policy to their own Cognito identity
+backend.auth.resources.authenticatedUserIamRole.addToPrincipalPolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ['iot:AttachPolicy'],
+    resources: ['*'],
+  })
+);
+
+// Create an IoT Core policy (required for authenticated Cognito identities)
+// Cognito identities need BOTH an IAM policy AND an IoT Core policy attached via AttachPolicy
+new CfnPolicy(authStack, 'AmazingHandIoTPolicy', {
+  policyName: 'AmazingHandPolicy',
+  policyDocument: {
+    Version: '2012-10-17',
+    Statement: [
+      {
+        Effect: 'Allow',
+        Action: ['iot:Publish'],
+        Resource: [`arn:aws:iot:us-east-1:${authStack.account}:topic/amazing-hand/*`],
+      },
+      {
+        Effect: 'Allow',
+        Action: ['iot:Connect'],
+        Resource: [`arn:aws:iot:us-east-1:${authStack.account}:client/*`],
+      },
+    ],
+  },
+});

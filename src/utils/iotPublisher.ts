@@ -1,10 +1,14 @@
 import { IoTDataPlaneClient, PublishCommand } from '@aws-sdk/client-iot-data-plane';
+import { IoTClient, AttachPolicyCommand } from '@aws-sdk/client-iot';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import type { SignSequence, HandPose } from '../data/aslSigns';
 
 const REGION = 'us-east-1';
 const DEFAULT_TOPIC = 'amazing-hand/servo';
 const MAX_POSES_PER_CHUNK = 10;
+const IOT_POLICY_NAME = 'AmazingHandPolicy';
+
+let policyAttached = false;
 
 function getEndpoint(): string {
   const endpoint = import.meta.env.VITE_IOT_ENDPOINT;
@@ -55,12 +59,60 @@ function toCompactPose(pose: HandPose): CompactPose {
   return compact;
 }
 
-async function createClient(): Promise<IoTDataPlaneClient> {
+async function getSession() {
   const session = await fetchAuthSession();
   const credentials = session.credentials;
   if (!credentials) {
     throw new Error('No credentials available for IoT publish');
   }
+  return { session, credentials };
+}
+
+/**
+ * Attach the IoT Core policy to the current Cognito identity.
+ * Required for authenticated Cognito identities to publish to IoT Core.
+ * Only needs to be done once per identity (idempotent).
+ */
+async function ensurePolicyAttached(): Promise<void> {
+  if (policyAttached) return;
+
+  const { session, credentials } = await getSession();
+  const identityId = session.identityId;
+  if (!identityId) {
+    console.warn('[IoT] No identity ID available, skipping policy attachment');
+    return;
+  }
+
+  const iotClient = new IoTClient({
+    region: REGION,
+    credentials: {
+      accessKeyId: credentials.accessKeyId,
+      secretAccessKey: credentials.secretAccessKey,
+      sessionToken: credentials.sessionToken,
+    },
+  });
+
+  try {
+    await iotClient.send(new AttachPolicyCommand({
+      policyName: IOT_POLICY_NAME,
+      target: identityId,
+    }));
+    console.log(`[IoT] Attached policy "${IOT_POLICY_NAME}" to identity ${identityId}`);
+    policyAttached = true;
+  } catch (err: any) {
+    // ResourceAlreadyExistsException means policy is already attached - that's fine
+    if (err.name === 'ResourceAlreadyExistsException' || err.Code === 'ResourceAlreadyExistsException') {
+      console.log('[IoT] Policy already attached');
+      policyAttached = true;
+    } else {
+      console.error('[IoT] Failed to attach policy:', err);
+      throw err;
+    }
+  }
+}
+
+async function createDataPlaneClient(): Promise<IoTDataPlaneClient> {
+  const { credentials } = await getSession();
 
   return new IoTDataPlaneClient({
     region: REGION,
@@ -83,7 +135,10 @@ export async function publishServoCommand(
   word: string,
   topic: string = DEFAULT_TOPIC
 ): Promise<void> {
-  const client = await createClient();
+  // Ensure IoT Core policy is attached to this Cognito identity
+  await ensurePolicyAttached();
+
+  const client = await createDataPlaneClient();
   const compactPoses = sequence.poses.map(toCompactPose);
   const totalChunks = Math.max(1, Math.ceil(compactPoses.length / MAX_POSES_PER_CHUNK));
   const messageId = generateId();
@@ -107,7 +162,7 @@ export async function publishServoCommand(
     const command = new PublishCommand({
       topic,
       payload: new TextEncoder().encode(JSON.stringify(payload)),
-      qos: 1,
+      qos: 0,
     });
 
     console.log(`[IoT] Publishing chunk ${i + 1}/${totalChunks} to ${topic}`, payload);
