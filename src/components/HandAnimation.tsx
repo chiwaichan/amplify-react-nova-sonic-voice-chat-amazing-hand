@@ -31,16 +31,18 @@ function createHand(side: 'right' | 'left'): {
     metalness: 0.6,
     roughness: 0.3,
   });
-  const servoMaterial = new THREE.MeshStandardMaterial({
+  const _servoMaterial = new THREE.MeshStandardMaterial({
     color: 0x1a6dd4,
     metalness: 0.2,
     roughness: 0.5,
   });
-  const shellMaterial = new THREE.MeshStandardMaterial({
+  void _servoMaterial; // reserved for servo detail accents
+  const shellMaterial = new THREE.MeshStandardMaterial({ // used by wrist cap below
     color: 0x3a3a3a,
     metalness: 0.1,
     roughness: 0.7,
   });
+  void shellMaterial;
   const tipMaterial = new THREE.MeshStandardMaterial({
     color: 0x555555,
     metalness: 0.1,
@@ -49,43 +51,31 @@ function createHand(side: 'right' | 'left'): {
 
   const mirror = side === 'left' ? -1 : 1;
 
-  // --- Palm (compact, hand-shaped) ---
-  // Main palm body — narrower and shorter
-  const palmGeometry = new THREE.BoxGeometry(0.85, 0.25, 0.9);
-  const palm = new THREE.Mesh(palmGeometry, frameMaterial);
-  palm.castShadow = true;
-  handGroup.add(palm);
+  // --- Palm (curved cup/bowl shell like the Amazing Hand) ---
+  // LatheGeometry profile: radius vs height, revolved around Y axis
+  // Wider at top (knuckles), tapers to narrow wrist at bottom
+  const cupProfile: THREE.Vector2[] = [];
+  for (let i = 0; i <= 12; i++) {
+    const t = i / 12;
+    const y = -0.5 + t * 0.65; // from -0.5 (wrist) to 0.15 (knuckle rim)
+    // Smooth curve: narrow at bottom, widens toward top
+    const radius = 0.18 + 0.38 * Math.pow(t, 0.6);
+    cupProfile.push(new THREE.Vector2(radius, y));
+  }
 
-  // Thin top plate (shell cover on palm front)
-  const topPlateGeo = new THREE.BoxGeometry(0.8, 0.04, 0.85);
-  const topPlate = new THREE.Mesh(topPlateGeo, shellMaterial);
-  topPlate.position.set(0, 0.14, -0.02);
-  handGroup.add(topPlate);
+  // Close the profile to make a solid shape: add points going back down at radius 0
+  const solidProfile = [
+    new THREE.Vector2(0, cupProfile[cupProfile.length - 1].y), // top center
+    ...cupProfile.slice().reverse(),                            // outer edge top→bottom
+    new THREE.Vector2(0, cupProfile[0].y),                      // bottom center
+  ];
 
-  // Servo housings recessed into palm back (2 small boxes, subtle)
-  const servoGeo = new THREE.BoxGeometry(0.15, 0.08, 0.22);
-  const servo1 = new THREE.Mesh(servoGeo, servoMaterial);
-  servo1.position.set(-0.18, -0.16, -0.12);
-  servo1.castShadow = true;
-  handGroup.add(servo1);
-  const servo2 = new THREE.Mesh(servoGeo, servoMaterial);
-  servo2.position.set(0.18, -0.16, -0.12);
-  servo2.castShadow = true;
-  handGroup.add(servo2);
-
-  // Wrist mount cylinder at palm base
-  const wristGeo = new THREE.CylinderGeometry(0.2, 0.24, 0.2, 16);
-  const wrist = new THREE.Mesh(wristGeo, frameMaterial);
-  wrist.position.set(0, -0.05, 0.55);
-  wrist.castShadow = true;
-  handGroup.add(wrist);
-
-  // Wrist accent ring
-  const wristRingGeo = new THREE.TorusGeometry(0.22, 0.025, 8, 16);
-  const wristRing = new THREE.Mesh(wristRingGeo, jointMaterial);
-  wristRing.position.set(0, -0.05, 0.45);
-  wristRing.rotation.x = Math.PI / 2;
-  handGroup.add(wristRing);
+  // Full 360-degree revolution → solid cup shape
+  const cupGeo = new THREE.LatheGeometry(solidProfile, 32);
+  const cupSolid = new THREE.Mesh(cupGeo, frameMaterial);
+  cupSolid.castShadow = true;
+  cupSolid.receiveShadow = true;
+  handGroup.add(cupSolid);
 
   // --- Finger configs (scaled to palm) ---
   // [xOffset, zOffset, proximalLength, distalLength, radius, isThumb]
@@ -191,7 +181,7 @@ export function HandAnimation({ currentPose }: HandAnimationProps) {
     if (!mountRef.current) return;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1a1a2e);
+    scene.background = new THREE.Color(0xffffff);
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
