@@ -15,11 +15,20 @@ interface Transcript {
   content: string;
 }
 
+export interface ToolUseEvent {
+  toolUseId: string;
+  toolName: string;
+  content: string;
+  promptName: string;
+  contentId: string;
+}
+
 interface UseNovaSonicOptions {
   onAudioOutput?: (base64Audio: string) => void;
   onTranscript?: (transcript: Transcript) => void;
   onStateChange?: (state: SessionState) => void;
   onError?: (error: string) => void;
+  onToolUse?: (event: ToolUseEvent) => Promise<string>;
 }
 
 interface UseNovaSonicReturn {
@@ -53,7 +62,7 @@ function log(step: string, data?: any) {
 
 export function useNovaSonic(options: UseNovaSonicOptions = {}): UseNovaSonicReturn {
   console.log('[NovaSonic] Hook initialized');
-  const { onAudioOutput, onTranscript, onStateChange, onError } = options;
+  const { onAudioOutput, onTranscript, onStateChange, onError, onToolUse } = options;
 
   const [sessionState, setSessionState] = useState<SessionState>('disconnected');
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
@@ -154,9 +163,11 @@ export function useNovaSonic(options: UseNovaSonicOptions = {}): UseNovaSonicRet
     const audioContentName = audioContentNameRef.current;
 
     const systemPrompt =
-      'You are a friendly assistant. The user and you will engage in a spoken dialog ' +
-      'exchanging the transcripts of a natural real-time conversation. Keep your responses short, ' +
-      'generally two or three sentences for chatty scenarios.';
+      'You are an ASL sign language translator. When the user says a word or phrase, ' +
+      'use the sign_hand tool to translate it into sign language. Always call sign_hand for every ' +
+      'word or phrase the user wants signed. For common words, use action "sign". For spelling out ' +
+      'words letter by letter, use action "fingerspell". For gestures like thumbs up or wave, use ' +
+      'action "gesture". Keep your spoken responses very brief, like "Signing hello" or "Fingerspelling that for you".';
 
     return [
       {
@@ -185,6 +196,40 @@ export function useNovaSonic(options: UseNovaSonicOptions = {}): UseNovaSonicRet
               voiceId: 'matthew',
               encoding: 'base64',
               audioType: 'SPEECH',
+            },
+            toolUseOutputConfiguration: {
+              mediaType: 'application/json',
+            },
+            toolConfiguration: {
+              tools: [
+                {
+                  toolSpec: {
+                    name: 'sign_hand',
+                    description:
+                      'Translate a word or phrase into ASL sign language by controlling robotic hand servos. ' +
+                      'Use action "sign" for common ASL word signs, "fingerspell" to spell letter by letter, ' +
+                      'or "gesture" for gestures like thumbs_up, wave, point, open, close, peace.',
+                    inputSchema: {
+                      json: JSON.stringify({
+                        type: 'object',
+                        properties: {
+                          action: {
+                            type: 'string',
+                            enum: ['sign', 'fingerspell', 'gesture'],
+                            description: 'Type of sign to perform',
+                          },
+                          word: {
+                            type: 'string',
+                            description: 'The word, phrase, or gesture name to sign',
+                          },
+                        },
+                        required: ['action', 'word'],
+                      }),
+                    },
+                  },
+                },
+              ],
+              toolChoice: { auto: {} },
             },
           },
         },
@@ -280,7 +325,7 @@ export function useNovaSonic(options: UseNovaSonicOptions = {}): UseNovaSonicRet
 
         // Format 3: Direct event properties (SDK fully deserialized)
         if (!jsonResponse && (event.sessionStart || event.promptStart || event.contentStart ||
-            event.textOutput || event.audioOutput || event.contentEnd || event.promptEnd || event.sessionEnd)) {
+            event.textOutput || event.audioOutput || event.contentEnd || event.promptEnd || event.sessionEnd || event.toolUse)) {
           jsonResponse = { event };
           log(`[${sid}] Using direct event format`);
         }
@@ -327,6 +372,116 @@ export function useNovaSonic(options: UseNovaSonicOptions = {}): UseNovaSonicRet
               log(`[${sid}] Audio output received, length: ${audioContent.length}`);
               onAudioOutput?.(audioContent);
             }
+          } else if (jsonResponse.event.toolUse) {
+            const toolUseData = jsonResponse.event.toolUse;
+            log(`[${sid}] Tool use event:`, toolUseData);
+
+            const toolUseId = toolUseData.toolUseId;
+            const toolName = toolUseData.toolName;
+            const content = toolUseData.content || '{}';
+            const toolPromptName = toolUseData.promptName || promptNameRef.current;
+            const contentId = toolUseData.contentName || generateUUID();
+
+            if (onToolUse) {
+              try {
+                const toolEvent: ToolUseEvent = {
+                  toolUseId,
+                  toolName,
+                  content,
+                  promptName: toolPromptName,
+                  contentId,
+                };
+
+                const result = await onToolUse(toolEvent);
+
+                // Send tool result back
+                const toolResultContentName = generateUUID();
+
+                pushEvent({
+                  event: {
+                    contentStart: {
+                      promptName: promptNameRef.current,
+                      contentName: toolResultContentName,
+                      type: 'TOOL_RESULT',
+                      interactive: true,
+                      role: 'TOOL',
+                      toolResultInputConfiguration: {
+                        toolUseId,
+                        type: 'TEXT',
+                        textInputConfiguration: {
+                          mediaType: 'text/plain',
+                        },
+                      },
+                    },
+                  },
+                });
+
+                pushEvent({
+                  event: {
+                    textInput: {
+                      promptName: promptNameRef.current,
+                      contentName: toolResultContentName,
+                      content: result,
+                    },
+                  },
+                });
+
+                pushEvent({
+                  event: {
+                    contentEnd: {
+                      promptName: promptNameRef.current,
+                      contentName: toolResultContentName,
+                    },
+                  },
+                });
+
+                log(`[${sid}] Tool result sent for ${toolName}`);
+              } catch (err: any) {
+                log(`[${sid}] Tool use error:`, err);
+
+                // Send error tool result
+                const errorContentName = generateUUID();
+
+                pushEvent({
+                  event: {
+                    contentStart: {
+                      promptName: promptNameRef.current,
+                      contentName: errorContentName,
+                      type: 'TOOL_RESULT',
+                      interactive: true,
+                      role: 'TOOL',
+                      toolResultInputConfiguration: {
+                        toolUseId,
+                        type: 'TEXT',
+                        status: 'error',
+                        textInputConfiguration: {
+                          mediaType: 'text/plain',
+                        },
+                      },
+                    },
+                  },
+                });
+
+                pushEvent({
+                  event: {
+                    textInput: {
+                      promptName: promptNameRef.current,
+                      contentName: errorContentName,
+                      content: JSON.stringify({ error: err?.message || 'Tool execution failed' }),
+                    },
+                  },
+                });
+
+                pushEvent({
+                  event: {
+                    contentEnd: {
+                      promptName: promptNameRef.current,
+                      contentName: errorContentName,
+                    },
+                  },
+                });
+              }
+            }
           }
         } else {
           log(`[${sid}] Unrecognized event format:`, JSON.stringify(event).substring(0, 200));
@@ -346,7 +501,7 @@ export function useNovaSonic(options: UseNovaSonicOptions = {}): UseNovaSonicRet
         updateState('error');
       }
     }
-  }, [onAudioOutput, onTranscript, onError, updateState]);
+  }, [onAudioOutput, onTranscript, onError, onToolUse, updateState, pushEvent]);
 
   const startSession = useCallback(async () => {
     const sid = generateUUID().substring(0, 8);

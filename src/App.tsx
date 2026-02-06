@@ -10,8 +10,8 @@ function App() {
         <div className="app-container">
           <header className="app-header">
             <div className="app-brand">
-              <h1>Nova Sonic 2</h1>
-              <span className="app-subtitle">AI Voice Assistant</span>
+              <h1>Amazing Hand</h1>
+              <span className="app-subtitle">ASL Sign Translator</span>
             </div>
             <div className="user-info">
               <span>{user?.signInDetails?.loginId}</span>

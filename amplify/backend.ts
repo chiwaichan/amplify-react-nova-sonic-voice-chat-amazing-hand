@@ -20,3 +20,15 @@ backend.auth.resources.authenticatedUserIamRole.addToPrincipalPolicy(
     ],
   })
 );
+
+// Grant authenticated users permission to publish to IoT Core
+backend.auth.resources.authenticatedUserIamRole.addToPrincipalPolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ['iot:Publish', 'iot:Connect'],
+    resources: [
+      'arn:aws:iot:us-east-1:*:topic/amazing-hand/*',
+      'arn:aws:iot:us-east-1:*:client/*',
+    ],
+  })
+);

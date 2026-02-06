@@ -1,15 +1,75 @@
 import { useState, useCallback, useEffect, useRef, useLayoutEffect } from 'react';
 import { useNovaSonic } from '../hooks/useNovaSonic';
+import type { ToolUseEvent } from '../hooks/useNovaSonic';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
+import { lookupSign } from '../data/aslSigns';
+import { publishServoCommand } from '../utils/iotPublisher';
 import './VoiceChat.css';
+
+interface ActionLogEntry {
+  id: string;
+  type: 'intent' | 'servo' | 'status' | 'error';
+  message: string;
+  timestamp: number;
+  detail?: string;
+}
+
+let actionIdCounter = 0;
 
 export function VoiceChat() {
   const [statusText, setStatusText] = useState('Click mic to start talking');
+  const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
   const hasStartedRef = useRef(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
 
+  const addAction = useCallback((type: ActionLogEntry['type'], message: string, detail?: string) => {
+    const entry: ActionLogEntry = {
+      id: `action-${++actionIdCounter}`,
+      type,
+      message,
+      timestamp: Date.now(),
+      detail,
+    };
+    setActionLog((prev) => [...prev, entry]);
+  }, []);
+
   const { queueAudio, stop: stopAudio, isPlaying } = useAudioPlayer();
+
+  const handleToolUse = useCallback(async (event: ToolUseEvent): Promise<string> => {
+    console.log('[VoiceChat] Tool use event:', event);
+
+    try {
+      const input = JSON.parse(event.content);
+      const action = input.action as 'sign' | 'fingerspell' | 'gesture';
+      const word = input.word as string;
+
+      addAction('intent', `Translating "${word}" (${action})`, `Tool: ${event.toolName}`);
+
+      const sequence = lookupSign(action, word);
+      const poseCount = sequence.poses.length;
+      addAction('servo', `Servo sequence: ${poseCount} pose(s) for "${sequence.name}"`,
+        `Poses: ${JSON.stringify(sequence.poses.slice(0, 3))}${poseCount > 3 ? '...' : ''}`);
+
+      try {
+        await publishServoCommand(sequence, action, word);
+        addAction('status', `Published "${word}" to Amazing Hand`);
+      } catch (iotErr: any) {
+        addAction('error', `IoT publish failed: ${iotErr?.message || 'Unknown error'}`);
+      }
+
+      return JSON.stringify({
+        status: 'success',
+        action,
+        word,
+        posesCount: poseCount,
+        signName: sequence.name,
+      });
+    } catch (err: any) {
+      addAction('error', `Tool error: ${err?.message || 'Failed to process'}`);
+      return JSON.stringify({ status: 'error', error: err?.message || 'Failed to process tool input' });
+    }
+  }, [addAction]);
 
   const {
     sessionState,
@@ -26,6 +86,7 @@ export function VoiceChat() {
       console.error('Nova Sonic error:', error);
       setStatusText(`Error: ${error}`);
     },
+    onToolUse: handleToolUse,
   });
 
   const { isRecording, startRecording, stopRecording, error: recorderError } = useAudioRecorder({
@@ -34,12 +95,12 @@ export function VoiceChat() {
     },
   });
 
-  // Auto-scroll to bottom when transcripts change
+  // Auto-scroll to bottom when transcripts or action log change
   useLayoutEffect(() => {
     if (transcriptRef.current) {
       transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
     }
-  }, [transcripts]);
+  }, [transcripts, actionLog]);
 
   // Update status text based on state
   useEffect(() => {
@@ -50,9 +111,9 @@ export function VoiceChat() {
     } else if (sessionState === 'error') {
       setStatusText('Connection error. Click mic to reconnect.');
     } else if (isRecording) {
-      setStatusText('🎤 Listening... (click mic to send)');
+      setStatusText('Listening... (click mic to send)');
     } else if (isPlaying) {
-      setStatusText('🔊 Assistant speaking...');
+      setStatusText('Assistant speaking...');
     } else if (sessionState === 'connected') {
       setStatusText('Click mic to start talking');
     } else {
@@ -133,6 +194,15 @@ export function VoiceChat() {
     return classes;
   };
 
+  const getActionIcon = (type: ActionLogEntry['type']) => {
+    switch (type) {
+      case 'intent': return '\u{1F9E0}';
+      case 'servo': return '\u{1F916}';
+      case 'status': return '\u2705';
+      case 'error': return '\u274C';
+    }
+  };
+
   return (
     <div className="voice-chat">
       <div className="status-bar">
@@ -143,19 +213,30 @@ export function VoiceChat() {
       </div>
 
       <div className="transcript-area" ref={transcriptRef}>
-        {transcripts.length === 0 ? (
+        {transcripts.length === 0 && actionLog.length === 0 ? (
           <p className="placeholder-text">
-            Your conversation will appear here...
+            Speak and your words will be translated to sign language...
           </p>
         ) : (
-          transcripts.map((t, index) => (
-            <div key={index} className={`transcript-message ${t.role}`}>
-              <span className="role-label">
-                {t.role === 'user' ? 'You' : 'Assistant'}
-              </span>
-              <p className="message-content">{t.content}</p>
-            </div>
-          ))
+          <>
+            {transcripts.map((t, index) => (
+              <div key={`t-${index}`} className={`transcript-message ${t.role}`}>
+                <span className="role-label">
+                  {t.role === 'user' ? 'You' : 'Assistant'}
+                </span>
+                <p className="message-content">{t.content}</p>
+              </div>
+            ))}
+            {actionLog.map((entry) => (
+              <div key={entry.id} className={`action-entry action-${entry.type}`}>
+                <span className="action-icon">{getActionIcon(entry.type)}</span>
+                <div className="action-content">
+                  <span className="action-message">{entry.message}</span>
+                  {entry.detail && <span className="action-detail">{entry.detail}</span>}
+                </div>
+              </div>
+            ))}
+          </>
         )}
       </div>
 
