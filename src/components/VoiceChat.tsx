@@ -4,7 +4,9 @@ import type { ToolUseEvent } from '../hooks/useNovaSonic';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { lookupSign } from '../data/aslSigns';
+import type { HandPose, SignSequence } from '../data/aslSigns';
 import { publishServoCommand } from '../utils/iotPublisher';
+import { HandAnimation } from './HandAnimation';
 import './VoiceChat.css';
 
 interface ActionLogEntry {
@@ -20,8 +22,10 @@ let actionIdCounter = 0;
 export function VoiceChat() {
   const [statusText, setStatusText] = useState('Click mic to start talking');
   const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
+  const [currentPose, setCurrentPose] = useState<HandPose | undefined>();
   const hasStartedRef = useRef(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
+  const animationTimeoutRef = useRef<number[]>([]);
 
   const addAction = useCallback((type: ActionLogEntry['type'], message: string, detail?: string) => {
     const entry: ActionLogEntry = {
@@ -32,6 +36,25 @@ export function VoiceChat() {
       detail,
     };
     setActionLog((prev) => [...prev, entry]);
+  }, []);
+
+  const animateSignSequence = useCallback((sequence: SignSequence) => {
+    animationTimeoutRef.current.forEach(clearTimeout);
+    animationTimeoutRef.current = [];
+
+    let delay = 0;
+    sequence.poses.forEach((pose) => {
+      const timeoutId = window.setTimeout(() => {
+        setCurrentPose(pose);
+      }, delay);
+      animationTimeoutRef.current.push(timeoutId);
+      delay += pose.holdMs;
+    });
+
+    const resetId = window.setTimeout(() => {
+      setCurrentPose(undefined);
+    }, delay + 500);
+    animationTimeoutRef.current.push(resetId);
   }, []);
 
   const { queueAudio, stop: stopAudio, isPlaying } = useAudioPlayer();
@@ -47,6 +70,7 @@ export function VoiceChat() {
       addAction('intent', `Translating "${word}" (${action})`, `Tool: ${event.toolName}`);
 
       const sequence = lookupSign(action, word);
+      animateSignSequence(sequence);
       const poseCount = sequence.poses.length;
       addAction('servo', `Servo sequence: ${poseCount} pose(s) for "${sequence.name}"`,
         `Poses: ${JSON.stringify(sequence.poses.slice(0, 3))}${poseCount > 3 ? '...' : ''}`);
@@ -139,6 +163,7 @@ export function VoiceChat() {
     return () => {
       console.log('[VoiceChat] Cleanup - ending session');
       hasStartedRef.current = false;
+      animationTimeoutRef.current.forEach(clearTimeout);
       endSession();
     };
   }, []);
@@ -211,6 +236,8 @@ export function VoiceChat() {
           {sessionState === 'connected' ? 'Connected' : sessionState}
         </span>
       </div>
+
+      <HandAnimation currentPose={currentPose} />
 
       <div className="transcript-area" ref={transcriptRef}>
         {transcripts.length === 0 && actionLog.length === 0 ? (
