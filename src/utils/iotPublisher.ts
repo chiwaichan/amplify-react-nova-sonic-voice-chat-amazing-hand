@@ -4,7 +4,7 @@ import { fetchAuthSession } from 'aws-amplify/auth';
 import type { SignSequence, HandPose } from '../data/aslSigns';
 
 const REGION = 'us-east-1';
-const DEFAULT_TOPIC = 'amazing-hand/servo';
+const DEFAULT_TOPIC = 'the-project/robotic-hand/XIAOAmazingHandRight/action';
 const MAX_POSES_PER_CHUNK = 10;
 const IOT_POLICY_NAME = 'AmazingHandPolicy';
 

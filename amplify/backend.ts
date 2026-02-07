@@ -31,7 +31,7 @@ backend.auth.resources.authenticatedUserIamRole.addToPrincipalPolicy(
     effect: Effect.ALLOW,
     actions: ['iot:Publish', 'iot:Connect'],
     resources: [
-      `arn:aws:iot:us-east-1:${authStack.account}:topic/amazing-hand/*`,
+      `arn:aws:iot:us-east-1:${authStack.account}:topic/the-project/robotic-hand/*`,
       `arn:aws:iot:us-east-1:${authStack.account}:client/*`,
     ],
   })
@@ -56,7 +56,7 @@ new CfnPolicy(authStack, 'AmazingHandIoTPolicy', {
       {
         Effect: 'Allow',
         Action: ['iot:Publish'],
-        Resource: [`arn:aws:iot:us-east-1:${authStack.account}:topic/amazing-hand/*`],
+        Resource: [`arn:aws:iot:us-east-1:${authStack.account}:topic/the-project/robotic-hand/*`],
       },
       {
         Effect: 'Allow',
