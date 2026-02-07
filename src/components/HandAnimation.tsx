@@ -314,9 +314,9 @@ export function HandAnimation({ currentPose }: HandAnimationProps) {
         const distalAngle = proxAngle * 0.5; // synchronized linkage: distal follows at 50%
 
         if (i === 0) {
-          // Thumb curls on z-axis
-          rigs[i].root.rotation.z = -Math.PI / 6 + proxAngle;
-          rigs[i].distal.rotation.z = distalAngle;
+          // Thumb curls on z-axis (inward toward palm)
+          rigs[i].root.rotation.z = -Math.PI / 6 - proxAngle;
+          rigs[i].distal.rotation.z = -distalAngle;
         } else {
           rigs[i].root.rotation.x = proxAngle;
           rigs[i].distal.rotation.x = distalAngle;
