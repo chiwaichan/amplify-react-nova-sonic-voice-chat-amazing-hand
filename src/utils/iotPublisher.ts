@@ -192,3 +192,29 @@ export async function publishServoCommand(
 
   console.log(`[IoT] Published ${totalChunks} chunk(s) for "${word}" (${action})`);
 }
+
+/**
+ * Publish a cleaned text sentence via MQTT to AWS IoT Core.
+ */
+export async function publishSentence(
+  sentence: string,
+  topic: string = IOT_TOPIC
+): Promise<void> {
+  await ensurePolicyAttached();
+
+  const client = await createDataPlaneClient();
+  const payload = {
+    id: generateId(),
+    sentence,
+    ts: Math.floor(Date.now() / 1000),
+  };
+
+  const command = new PublishCommand({
+    topic,
+    payload: new TextEncoder().encode(JSON.stringify(payload)),
+    qos: 0,
+  });
+
+  console.log(`[IoT] Publishing sentence to ${topic}`, payload);
+  await client.send(command);
+}

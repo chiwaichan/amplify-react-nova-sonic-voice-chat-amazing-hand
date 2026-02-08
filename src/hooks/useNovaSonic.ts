@@ -163,11 +163,10 @@ export function useNovaSonic(options: UseNovaSonicOptions = {}): UseNovaSonicRet
     const audioContentName = audioContentNameRef.current;
 
     const systemPrompt =
-      'You are an ASL sign language translator. When the user says a word or phrase, ' +
-      'use the sign_hand tool to translate it into sign language. Always call sign_hand for every ' +
-      'word or phrase the user wants signed. For common words, use action "sign". For spelling out ' +
-      'words letter by letter, use action "fingerspell". For gestures like thumbs up or wave, use ' +
-      'action "gesture". Keep your spoken responses very brief, like "Signing hello" or "Fingerspelling that for you".';
+      'You are a speech-to-text assistant. Listen to the user\'s speech and clean it up into ' +
+      'well-formed sentences. After each utterance, call the send_text tool with the cleaned sentence. ' +
+      'Fix grammar, remove filler words (um, uh, like), and produce clear text. ' +
+      'Keep your spoken responses very brief, like "Got it" or "Sent".';
 
     return [
       {
@@ -204,26 +203,20 @@ export function useNovaSonic(options: UseNovaSonicOptions = {}): UseNovaSonicRet
               tools: [
                 {
                   toolSpec: {
-                    name: 'sign_hand',
+                    name: 'send_text',
                     description:
-                      'Translate a word or phrase into ASL sign language by controlling robotic hand servos. ' +
-                      'Use action "sign" for common ASL word signs, "fingerspell" to spell letter by letter, ' +
-                      'or "gesture" for gestures like thumbs_up, wave, point, open, close, peace.',
+                      'Send a cleaned-up sentence to the robotic hand display. ' +
+                      'Call this after each user utterance with the cleaned text.',
                     inputSchema: {
                       json: JSON.stringify({
                         type: 'object',
                         properties: {
-                          action: {
+                          sentence: {
                             type: 'string',
-                            enum: ['sign', 'fingerspell', 'gesture'],
-                            description: 'Type of sign to perform',
-                          },
-                          word: {
-                            type: 'string',
-                            description: 'The word, phrase, or gesture name to sign',
+                            description: 'The cleaned-up, well-formed sentence',
                           },
                         },
-                        required: ['action', 'word'],
+                        required: ['sentence'],
                       }),
                     },
                   },

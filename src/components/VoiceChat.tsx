@@ -3,15 +3,13 @@ import { useNovaSonic } from '../hooks/useNovaSonic';
 import type { ToolUseEvent } from '../hooks/useNovaSonic';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
-import { lookupSign } from '../data/aslSigns';
-import type { HandPose, SignSequence } from '../data/aslSigns';
-import { publishServoCommand, getIoTEndpoint, IOT_TOPIC } from '../utils/iotPublisher';
+import { publishSentence, getIoTEndpoint, IOT_TOPIC } from '../utils/iotPublisher';
 import { HandAnimation } from './HandAnimation';
 import './VoiceChat.css';
 
 interface ActionLogEntry {
   id: string;
-  type: 'intent' | 'servo' | 'status' | 'error';
+  type: 'intent' | 'publish' | 'status' | 'error';
   message: string;
   timestamp: number;
   detail?: string;
@@ -22,10 +20,8 @@ let actionIdCounter = 0;
 export function VoiceChat() {
   const [statusText, setStatusText] = useState('Click mic to start talking');
   const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
-  const [currentPose, setCurrentPose] = useState<HandPose | undefined>();
   const [iotEndpoint, setIotEndpoint] = useState<string>('resolving...');
   const transcriptRef = useRef<HTMLDivElement>(null);
-  const animationTimeoutRef = useRef<number[]>([]);
 
   const addAction = useCallback((type: ActionLogEntry['type'], message: string, detail?: string) => {
     const entry: ActionLogEntry = {
@@ -38,25 +34,6 @@ export function VoiceChat() {
     setActionLog((prev) => [...prev, entry]);
   }, []);
 
-  const animateSignSequence = useCallback((sequence: SignSequence) => {
-    animationTimeoutRef.current.forEach(clearTimeout);
-    animationTimeoutRef.current = [];
-
-    let delay = 0;
-    sequence.poses.forEach((pose) => {
-      const timeoutId = window.setTimeout(() => {
-        setCurrentPose(pose);
-      }, delay);
-      animationTimeoutRef.current.push(timeoutId);
-      delay += pose.holdMs;
-    });
-
-    const resetId = window.setTimeout(() => {
-      setCurrentPose(undefined);
-    }, delay + 500);
-    animationTimeoutRef.current.push(resetId);
-  }, []);
-
   const { queueAudio, stop: stopAudio, isPlaying } = useAudioPlayer();
 
   const handleToolUse = useCallback(async (event: ToolUseEvent): Promise<string> => {
@@ -64,30 +41,20 @@ export function VoiceChat() {
 
     try {
       const input = JSON.parse(event.content);
-      const action = input.action as 'sign' | 'fingerspell' | 'gesture';
-      const word = input.word as string;
+      const sentence = input.sentence as string;
 
-      addAction('intent', `Translating "${word}" (${action})`, `Tool: ${event.toolName}`);
-
-      const sequence = lookupSign(action, word);
-      animateSignSequence(sequence);
-      const poseCount = sequence.poses.length;
-      addAction('servo', `Servo sequence: ${poseCount} pose(s) for "${sequence.name}"`,
-        `Poses: ${JSON.stringify(sequence.poses.slice(0, 3))}${poseCount > 3 ? '...' : ''}`);
+      addAction('intent', `Cleaned text: "${sentence}"`, `Tool: ${event.toolName}`);
 
       try {
-        await publishServoCommand(sequence, action, word);
-        addAction('status', `Published "${word}" to Amazing Hand`);
+        await publishSentence(sentence);
+        addAction('status', `Published sentence to IoT`);
       } catch (iotErr: any) {
         addAction('error', `IoT publish failed: ${iotErr?.message || 'Unknown error'}`);
       }
 
       return JSON.stringify({
         status: 'success',
-        action,
-        word,
-        posesCount: poseCount,
-        signName: sequence.name,
+        sentence,
       });
     } catch (err: any) {
       addAction('error', `Tool error: ${err?.message || 'Failed to process'}`);
@@ -155,7 +122,6 @@ export function VoiceChat() {
   useEffect(() => {
     return () => {
       console.log('[VoiceChat] Cleanup - ending session');
-      animationTimeoutRef.current.forEach(clearTimeout);
       endSession();
     };
   }, []);
@@ -221,7 +187,7 @@ export function VoiceChat() {
   const getActionIcon = (type: ActionLogEntry['type']) => {
     switch (type) {
       case 'intent': return '\u{1F9E0}';
-      case 'servo': return '\u{1F916}';
+      case 'publish': return '\u{1F4E4}';
       case 'status': return '\u2705';
       case 'error': return '\u274C';
     }
@@ -241,12 +207,12 @@ export function VoiceChat() {
         <span>Topic: {IOT_TOPIC}</span>
       </div>
 
-      <HandAnimation currentPose={currentPose} />
+      <HandAnimation />
 
       <div className="transcript-area" ref={transcriptRef}>
         {transcripts.length === 0 && actionLog.length === 0 ? (
           <p className="placeholder-text">
-            Speak and your words will be translated to sign language...
+            Speak and your words will be cleaned and sent to IoT...
           </p>
         ) : (
           <>
