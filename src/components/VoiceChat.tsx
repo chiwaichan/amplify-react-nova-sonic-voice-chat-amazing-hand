@@ -70,8 +70,8 @@ export function VoiceChat() {
     endSession,
     transcripts,
   } = useNovaSonic({
-    onAudioOutput: (base64Audio) => {
-      queueAudio(base64Audio);
+    onAudioOutput: () => {
+      // Discard assistant audio — we only need the cleaned text via tool use
     },
     onError: (error) => {
       console.error('Nova Sonic error:', error);
@@ -216,11 +216,9 @@ export function VoiceChat() {
           </p>
         ) : (
           <>
-            {transcripts.map((t, index) => (
+            {transcripts.filter((t) => t.role === 'user').map((t, index) => (
               <div key={`t-${index}`} className={`transcript-message ${t.role}`}>
-                <span className="role-label">
-                  {t.role === 'user' ? 'You' : 'Assistant'}
-                </span>
+                <span className="role-label">You</span>
                 <p className="message-content">{t.content}</p>
               </div>
             ))}
