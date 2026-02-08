@@ -27,6 +27,7 @@ export function VoiceChat() {
   const hasStartedRef = useRef(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const animationTimeoutRef = useRef<number[]>([]);
+  const reconnectTimerRef = useRef<number | null>(null);
 
   const addAction = useCallback((type: ActionLogEntry['type'], message: string, detail?: string) => {
     const entry: ActionLogEntry = {
@@ -109,7 +110,19 @@ export function VoiceChat() {
     },
     onError: (error) => {
       console.error('Nova Sonic error:', error);
-      setStatusText(`Error: ${error}`);
+      const isTimeout = typeof error === 'string' && error.toLowerCase().includes('timed out');
+      if (isTimeout) {
+        console.log('[VoiceChat] Timeout detected, auto-reconnecting in 2s...');
+        setStatusText('Reconnecting...');
+        if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = window.setTimeout(() => {
+          startSession().catch((err) => {
+            console.error('[VoiceChat] Auto-reconnect failed:', err);
+          });
+        }, 2000);
+      } else {
+        setStatusText(`Error: ${error}`);
+      }
     },
     onToolUse: handleToolUse,
   });
@@ -165,6 +178,7 @@ export function VoiceChat() {
       console.log('[VoiceChat] Cleanup - ending session');
       hasStartedRef.current = false;
       animationTimeoutRef.current.forEach(clearTimeout);
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       endSession();
     };
   }, []);
