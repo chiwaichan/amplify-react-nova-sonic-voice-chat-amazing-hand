@@ -35,7 +35,7 @@ export function VoiceChat() {
     setActionLog((prev) => [...prev, entry]);
   }, []);
 
-  const { queueAudio, stop: stopAudio, isPlaying } = useAudioPlayer();
+  const { stop: stopAudio, isPlaying } = useAudioPlayer();
 
   const handleToolUse = useCallback(async (event: ToolUseEvent): Promise<string> => {
     console.log('[VoiceChat] Tool use event:', event);
