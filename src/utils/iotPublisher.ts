@@ -2,11 +2,12 @@ import { IoTDataPlaneClient, PublishCommand } from '@aws-sdk/client-iot-data-pla
 import { IoTClient, AttachPolicyCommand } from '@aws-sdk/client-iot';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import type { SignSequence, HandPose } from '../data/aslSigns';
+import outputs from '../../amplify_outputs.json';
 
 const REGION = 'us-east-1';
 const DEFAULT_TOPIC = 'the-project/robotic-hand/XIAOAmazingHandRight/action';
 const MAX_POSES_PER_CHUNK = 10;
-const IOT_POLICY_NAME = 'AmazingHandPolicy';
+const IOT_POLICY_NAME = (outputs as any).custom?.iotPolicyName || 'RoboticHandPolicy';
 
 let policyAttached = false;
 

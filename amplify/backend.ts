@@ -48,8 +48,10 @@ backend.auth.resources.authenticatedUserIamRole.addToPrincipalPolicy(
 
 // Create an IoT Core policy (required for authenticated Cognito identities)
 // Cognito identities need BOTH an IAM policy AND an IoT Core policy attached via AttachPolicy
-new CfnPolicy(authStack, 'AmazingHandIoTPolicy', {
-  policyName: 'AmazingHandPolicy',
+// Policy name includes stack name to avoid conflicts between sandbox and CI/CD deploys
+const iotPolicyName = `RoboticHandPolicy-${authStack.stackName}`;
+new CfnPolicy(authStack, 'RoboticHandIoTPolicy', {
+  policyName: iotPolicyName,
   policyDocument: {
     Version: '2012-10-17',
     Statement: [
@@ -64,5 +66,12 @@ new CfnPolicy(authStack, 'AmazingHandIoTPolicy', {
         Resource: [`arn:aws:iot:us-east-1:${authStack.account}:client/*`],
       },
     ],
+  },
+});
+
+// Expose the IoT policy name so the frontend can attach it at runtime
+backend.addOutput({
+  custom: {
+    iotPolicyName,
   },
 });
