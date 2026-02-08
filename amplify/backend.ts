@@ -1,11 +1,13 @@
 import { defineBackend } from '@aws-amplify/backend';
 import { auth } from './auth/resource';
+import { data } from './data/resource';
 import { PolicyStatement, Effect } from 'aws-cdk-lib/aws-iam';
 import { Stack } from 'aws-cdk-lib';
 import { CfnPolicy } from 'aws-cdk-lib/aws-iot';
 
 const backend = defineBackend({
   auth,
+  data,
 });
 
 const authStack = Stack.of(backend.auth.resources.authenticatedUserIamRole);

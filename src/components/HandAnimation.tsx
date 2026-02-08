@@ -4,8 +4,16 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { HandPose } from '../data/aslSigns';
 import './HandAnimation.css';
 
+export interface FingerAngles {
+  index: { angle_1: number; angle_2: number };
+  middle: { angle_1: number; angle_2: number };
+  ring: { angle_1: number; angle_2: number };
+  thumb: { angle_1: number; angle_2: number };
+}
+
 interface HandAnimationProps {
   currentPose?: HandPose;
+  fingerAngles?: FingerAngles;
 }
 
 interface FingerRig {
@@ -165,7 +173,7 @@ function createHand(side: 'right' | 'left'): {
   return { handGroup, fingerRigs };
 }
 
-export function HandAnimation({ currentPose }: HandAnimationProps) {
+export function HandAnimation({ currentPose, fingerAngles }: HandAnimationProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -267,11 +275,51 @@ export function HandAnimation({ currentPose }: HandAnimationProps) {
     };
   }, []);
 
-  // Update finger positions when pose changes
+  // Update finger positions when pose or fingerAngles changes
   useEffect(() => {
     const rightHand = rightHandRef.current;
     const leftHand = leftHandRef.current;
     if (!rightHand || !leftHand) return;
+
+    // Convert angle from -90..90 range to radians
+    // -90 = fully extended, 90 = fully curled
+    const angleToRad = (angle: number): number => {
+      return (angle / 90) * (Math.PI / 2);
+    };
+
+    // Apply fingerAngles (8-servo model) if provided
+    const applyFingerAngles = (angles: FingerAngles, rigs: FingerRig[]) => {
+      // Order: thumb, index, middle, ring (matching fingerConfigs)
+      const fingerData = [
+        angles.thumb,
+        angles.index,
+        angles.middle,
+        angles.ring,
+      ];
+
+      fingerData.forEach((finger, i) => {
+        const proxAngle = angleToRad(finger.angle_1);
+        const distalAngle = angleToRad(finger.angle_2);
+
+        if (i === 0) {
+          // Thumb curls on z-axis (inward toward palm)
+          rigs[i].root.rotation.z = -Math.PI / 6 - proxAngle;
+          rigs[i].distal.rotation.z = -distalAngle;
+        } else {
+          rigs[i].root.rotation.x = -proxAngle;
+          rigs[i].distal.rotation.x = -distalAngle;
+        }
+      });
+    };
+
+    // If fingerAngles provided, use that for right hand
+    if (fingerAngles) {
+      rightHand.visible = true;
+      rightHand.position.set(0, 0, 0);
+      leftHand.visible = false;
+      applyFingerAngles(fingerAngles, fingerRigsRef.current.right);
+      return;
+    }
 
     if (!currentPose) {
       // Default: show right hand, all fingers open
@@ -330,7 +378,7 @@ export function HandAnimation({ currentPose }: HandAnimationProps) {
     if ((hand === 'left' || hand === 'both') && currentPose.left) {
       applyServos(currentPose.left, fingerRigsRef.current.left);
     }
-  }, [currentPose]);
+  }, [currentPose, fingerAngles]);
 
   return <div ref={mountRef} className="hand-animation-container" />;
 }

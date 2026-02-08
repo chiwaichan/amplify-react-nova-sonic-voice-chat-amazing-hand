@@ -1,10 +1,12 @@
-import { useState, useCallback, useEffect, useRef, useLayoutEffect } from 'react';
+import { useState, useCallback, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { useNovaSonic } from '../hooks/useNovaSonic';
 import type { ToolUseEvent } from '../hooks/useNovaSonic';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
+import { useHandStream } from '../hooks/useHandStream';
 import { publishSentence, getIoTEndpoint, IOT_TOPIC } from '../utils/iotPublisher';
 import { HandAnimation } from './HandAnimation';
+import type { FingerAngles } from './HandAnimation';
 import './VoiceChat.css';
 
 interface ActionLogEntry {
@@ -23,6 +25,32 @@ export function VoiceChat() {
   const [iotEndpoint, setIotEndpoint] = useState<string>('resolving...');
   const [pendingRecord, setPendingRecord] = useState(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
+
+  // Hand stream subscription for real-time servo updates
+  const { latestState: handState, isConnected: isHandStreamConnected } = useHandStream('XIAOAmazingHandRight');
+
+  // Convert HandState to FingerAngles for the animation
+  const fingerAngles: FingerAngles | undefined = useMemo(() => {
+    if (!handState) return undefined;
+    return {
+      index: {
+        angle_1: handState.indexAngle1 ?? 0,
+        angle_2: handState.indexAngle2 ?? 0,
+      },
+      middle: {
+        angle_1: handState.middleAngle1 ?? 0,
+        angle_2: handState.middleAngle2 ?? 0,
+      },
+      ring: {
+        angle_1: handState.ringAngle1 ?? 0,
+        angle_2: handState.ringAngle2 ?? 0,
+      },
+      thumb: {
+        angle_1: handState.thumbAngle1 ?? 0,
+        angle_2: handState.thumbAngle2 ?? 0,
+      },
+    };
+  }, [handState]);
 
   const addAction = useCallback((type: ActionLogEntry['type'], message: string, detail?: string) => {
     const entry: ActionLogEntry = {
@@ -215,9 +243,10 @@ export function VoiceChat() {
       <div className="iot-info">
         <span>Endpoint: {iotEndpoint}</span>
         <span>Topic: {IOT_TOPIC}</span>
+        <span>Hand Stream: {isHandStreamConnected ? 'Connected' : 'Disconnected'}</span>
       </div>
 
-      <HandAnimation />
+      <HandAnimation fingerAngles={fingerAngles} />
 
       <div className="transcript-area" ref={transcriptRef}>
         {transcripts.length === 0 && actionLog.length === 0 ? (
