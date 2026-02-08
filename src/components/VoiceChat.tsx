@@ -24,10 +24,8 @@ export function VoiceChat() {
   const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
   const [currentPose, setCurrentPose] = useState<HandPose | undefined>();
   const [iotEndpoint, setIotEndpoint] = useState<string>('resolving...');
-  const hasStartedRef = useRef(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const animationTimeoutRef = useRef<number[]>([]);
-  const reconnectTimerRef = useRef<number | null>(null);
 
   const addAction = useCallback((type: ActionLogEntry['type'], message: string, detail?: string) => {
     const entry: ActionLogEntry = {
@@ -112,14 +110,8 @@ export function VoiceChat() {
       console.error('Nova Sonic error:', error);
       const isTimeout = typeof error === 'string' && error.toLowerCase().includes('timed out');
       if (isTimeout) {
-        console.log('[VoiceChat] Timeout detected, auto-reconnecting in 2s...');
-        setStatusText('Reconnecting...');
-        if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
-        reconnectTimerRef.current = window.setTimeout(() => {
-          startSession().catch((err) => {
-            console.error('[VoiceChat] Auto-reconnect failed:', err);
-          });
-        }, 2000);
+        console.log('[VoiceChat] Session timed out (idle). Click mic to reconnect.');
+        setStatusText('Session timed out. Click mic to reconnect.');
       } else {
         setStatusText(`Error: ${error}`);
       }
@@ -159,26 +151,11 @@ export function VoiceChat() {
     }
   }, [sessionState, isRecording, isPlaying, recorderError]);
 
-  // Initialize session on mount
+  // Cleanup on unmount (no auto-connect on load to save Bedrock costs)
   useEffect(() => {
-    console.log('[VoiceChat] Mount effect running, hasStarted:', hasStartedRef.current);
-    if (hasStartedRef.current) {
-      console.log('[VoiceChat] Skipping duplicate session start (StrictMode)');
-      return;
-    }
-    hasStartedRef.current = true;
-    console.log('[VoiceChat] Calling startSession...');
-    startSession().then(() => {
-      console.log('[VoiceChat] startSession completed');
-    }).catch((err) => {
-      console.error('[VoiceChat] startSession error:', err);
-    });
-
     return () => {
       console.log('[VoiceChat] Cleanup - ending session');
-      hasStartedRef.current = false;
       animationTimeoutRef.current.forEach(clearTimeout);
-      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       endSession();
     };
   }, []);
