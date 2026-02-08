@@ -44,11 +44,9 @@ export function VoiceChat() {
       const input = JSON.parse(event.content);
       const sentence = input.sentence as string;
 
-      addAction('intent', `Cleaned text: "${sentence}"`, `Tool: ${event.toolName}`);
-
       try {
         await publishSentence(sentence);
-        addAction('status', `Published sentence to IoT`);
+        addAction('status', `Sending instructions to hands to sign: ${sentence}`);
       } catch (iotErr: any) {
         addAction('error', `IoT publish failed: ${iotErr?.message || 'Unknown error'}`);
       }
