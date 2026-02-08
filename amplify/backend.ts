@@ -25,7 +25,7 @@ backend.auth.resources.authenticatedUserIamRole.addToPrincipalPolicy(
   })
 );
 
-// Grant authenticated users IAM permissions for IoT publish + policy attachment
+// Grant authenticated users IAM permissions for IoT publish + connect
 backend.auth.resources.authenticatedUserIamRole.addToPrincipalPolicy(
   new PolicyStatement({
     effect: Effect.ALLOW,
@@ -34,6 +34,15 @@ backend.auth.resources.authenticatedUserIamRole.addToPrincipalPolicy(
       `arn:aws:iot:us-east-1:${authStack.account}:topic/the-project/robotic-hand/*`,
       `arn:aws:iot:us-east-1:${authStack.account}:client/*`,
     ],
+  })
+);
+
+// DescribeEndpoint is an account-level action (requires resource: *)
+backend.auth.resources.authenticatedUserIamRole.addToPrincipalPolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ['iot:DescribeEndpoint'],
+    resources: ['*'],
   })
 );
 

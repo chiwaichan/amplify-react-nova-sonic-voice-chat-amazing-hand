@@ -1,5 +1,5 @@
 import { IoTDataPlaneClient, PublishCommand } from '@aws-sdk/client-iot-data-plane';
-import { IoTClient, AttachPolicyCommand } from '@aws-sdk/client-iot';
+import { IoTClient, AttachPolicyCommand, DescribeEndpointCommand } from '@aws-sdk/client-iot';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import type { SignSequence, HandPose } from '../data/aslSigns';
 import outputs from '../../amplify_outputs.json';
@@ -10,13 +10,32 @@ const MAX_POSES_PER_CHUNK = 10;
 const IOT_POLICY_NAME = (outputs as any).custom?.iotPolicyName || 'RoboticHandPolicy';
 
 let policyAttached = false;
+let cachedEndpoint: string | null = null;
 
-function getEndpoint(): string {
-  const endpoint = import.meta.env.VITE_IOT_ENDPOINT;
-  if (!endpoint) {
-    throw new Error('VITE_IOT_ENDPOINT environment variable is not set');
+async function getEndpoint(): Promise<string> {
+  if (cachedEndpoint) return cachedEndpoint;
+
+  const { credentials } = await getSession();
+  const iotClient = new IoTClient({
+    region: REGION,
+    credentials: {
+      accessKeyId: credentials.accessKeyId,
+      secretAccessKey: credentials.secretAccessKey,
+      sessionToken: credentials.sessionToken,
+    },
+  });
+
+  const response = await iotClient.send(new DescribeEndpointCommand({
+    endpointType: 'iot:Data-ATS',
+  }));
+
+  if (!response.endpointAddress) {
+    throw new Error('Failed to resolve IoT endpoint');
   }
-  return endpoint;
+
+  cachedEndpoint = response.endpointAddress;
+  console.log(`[IoT] Resolved endpoint: ${cachedEndpoint}`);
+  return cachedEndpoint;
 }
 
 function generateId(): string {
@@ -114,6 +133,7 @@ async function ensurePolicyAttached(): Promise<void> {
 
 async function createDataPlaneClient(): Promise<IoTDataPlaneClient> {
   const { credentials } = await getSession();
+  const endpoint = await getEndpoint();
 
   return new IoTDataPlaneClient({
     region: REGION,
@@ -122,7 +142,7 @@ async function createDataPlaneClient(): Promise<IoTDataPlaneClient> {
       secretAccessKey: credentials.secretAccessKey,
       sessionToken: credentials.sessionToken,
     },
-    endpoint: `https://${getEndpoint()}`,
+    endpoint: `https://${endpoint}`,
   });
 }
 
