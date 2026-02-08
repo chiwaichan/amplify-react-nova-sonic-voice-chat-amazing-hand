@@ -5,14 +5,14 @@ import type { SignSequence, HandPose } from '../data/aslSigns';
 import outputs from '../../amplify_outputs.json';
 
 const REGION = 'us-east-1';
-const DEFAULT_TOPIC = 'the-project/robotic-hand/XIAOAmazingHandRight/action';
+export const IOT_TOPIC = 'the-project/robotic-hand/XIAOAmazingHandRight/action';
 const MAX_POSES_PER_CHUNK = 10;
 const IOT_POLICY_NAME = (outputs as any).custom?.iotPolicyName || 'RoboticHandPolicy';
 
 let policyAttached = false;
 let cachedEndpoint: string | null = null;
 
-async function getEndpoint(): Promise<string> {
+export async function getIoTEndpoint(): Promise<string> {
   if (cachedEndpoint) return cachedEndpoint;
 
   const { credentials } = await getSession();
@@ -133,7 +133,7 @@ async function ensurePolicyAttached(): Promise<void> {
 
 async function createDataPlaneClient(): Promise<IoTDataPlaneClient> {
   const { credentials } = await getSession();
-  const endpoint = await getEndpoint();
+  const endpoint = await getIoTEndpoint();
 
   return new IoTDataPlaneClient({
     region: REGION,
@@ -154,7 +154,7 @@ export async function publishServoCommand(
   sequence: SignSequence,
   action: string,
   word: string,
-  topic: string = DEFAULT_TOPIC
+  topic: string = IOT_TOPIC
 ): Promise<void> {
   // Ensure IoT Core policy is attached to this Cognito identity
   await ensurePolicyAttached();

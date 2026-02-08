@@ -7,6 +7,18 @@
   padding: 1.5rem;
 }
 
+/* IoT Info */
+.iot-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: monospace;
+  margin-bottom: 0.5rem;
+}
+
 /* Status Bar */
 .status-bar {
   display: flex;

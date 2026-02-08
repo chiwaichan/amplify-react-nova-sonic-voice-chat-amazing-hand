@@ -5,7 +5,7 @@ import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { lookupSign } from '../data/aslSigns';
 import type { HandPose, SignSequence } from '../data/aslSigns';
-import { publishServoCommand } from '../utils/iotPublisher';
+import { publishServoCommand, getIoTEndpoint, IOT_TOPIC } from '../utils/iotPublisher';
 import { HandAnimation } from './HandAnimation';
 import './VoiceChat.css';
 
@@ -23,6 +23,7 @@ export function VoiceChat() {
   const [statusText, setStatusText] = useState('Click mic to start talking');
   const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
   const [currentPose, setCurrentPose] = useState<HandPose | undefined>();
+  const [iotEndpoint, setIotEndpoint] = useState<string>('resolving...');
   const hasStartedRef = useRef(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const animationTimeoutRef = useRef<number[]>([]);
@@ -168,6 +169,13 @@ export function VoiceChat() {
     };
   }, []);
 
+  // Resolve IoT endpoint on mount
+  useEffect(() => {
+    getIoTEndpoint()
+      .then((ep) => setIotEndpoint(ep))
+      .catch(() => setIotEndpoint('unavailable'));
+  }, []);
+
   // Toggle recording on click
   const handleMicClick = useCallback(async () => {
     // If currently recording, stop
@@ -235,6 +243,11 @@ export function VoiceChat() {
         <span className="status-text">
           {sessionState === 'connected' ? 'Connected' : sessionState}
         </span>
+      </div>
+
+      <div className="iot-info">
+        <span>Endpoint: {iotEndpoint}</span>
+        <span>Topic: {IOT_TOPIC}</span>
       </div>
 
       <HandAnimation currentPose={currentPose} />
