@@ -21,6 +21,7 @@ export function VoiceChat() {
   const [statusText, setStatusText] = useState('Click mic to start talking');
   const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
   const [iotEndpoint, setIotEndpoint] = useState<string>('resolving...');
+  const [pendingRecord, setPendingRecord] = useState(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
 
   const addAction = useCallback((type: ActionLogEntry['type'], message: string, detail?: string) => {
@@ -126,6 +127,16 @@ export function VoiceChat() {
     };
   }, []);
 
+  // Auto-start recording once session connects after mic click
+  useEffect(() => {
+    if (pendingRecord && sessionState === 'connected') {
+      setPendingRecord(false);
+      console.log('[VoiceChat] Session connected, auto-starting recording');
+      stopAudio();
+      startRecording();
+    }
+  }, [pendingRecord, sessionState, startRecording, stopAudio]);
+
   // Resolve IoT endpoint on mount
   useEffect(() => {
     getIoTEndpoint()
@@ -143,9 +154,10 @@ export function VoiceChat() {
       return;
     }
 
-    // If not connected, try to reconnect
+    // If not connected, connect first then auto-record once connected
     if (sessionState !== 'connected') {
       if (sessionState === 'disconnected' || sessionState === 'error') {
+        setPendingRecord(true);
         await startSession();
       }
       return;
