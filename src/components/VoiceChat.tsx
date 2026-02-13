@@ -234,6 +234,10 @@ export function VoiceChat() {
   return (
     <div className="voice-chat">
       <div className="left-panel">
+        <div className="hand-stream-status">
+          Hand Stream: {isHandStreamConnected ? 'Connected' : 'Disconnected'}
+        </div>
+
         <HandAnimation fingerAngles={fingerAngles} />
 
         <div className="hand-data-panel">
@@ -312,14 +316,13 @@ export function VoiceChat() {
         <div className="status-bar">
           <span className={getStatusIndicatorClass()}></span>
           <span className="status-text">
-            {sessionState === 'connected' ? 'Connected' : sessionState}
+            Nova Sonic: {sessionState === 'connected' ? 'Connected' : sessionState}
           </span>
         </div>
 
         <div className="iot-info">
           <span>Endpoint: {iotEndpoint}</span>
           <span>Topic: {IOT_TOPIC}</span>
-          <span>Hand Stream: {isHandStreamConnected ? 'Connected' : 'Disconnected'}</span>
         </div>
 
         <div className="transcript-area" ref={transcriptRef}>
