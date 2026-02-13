@@ -1,10 +1,27 @@
 .voice-chat {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   height: 100%;
-  max-width: 700px;
   margin: 0 auto;
   padding: 1.5rem;
+  gap: 1.5rem;
+}
+
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  width: 420px;
+  min-width: 360px;
+  flex-shrink: 0;
+  gap: 0.75rem;
+  overflow-y: auto;
+}
+
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 /* IoT Info */
@@ -66,6 +83,69 @@
   font-weight: 500;
   text-transform: capitalize;
   letter-spacing: 0.3px;
+}
+
+/* Hand Data Panel */
+.hand-data-panel {
+  padding: 0.75rem 1rem;
+  background: rgba(26, 26, 46, 0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+.hand-data-header {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 0.5rem;
+}
+
+.hand-data-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.hand-data-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.hand-data-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.hand-data-label {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.hand-data-value {
+  color: #ff9900;
+  font-weight: 600;
+}
+
+.hand-data-separator {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.25);
+  margin-top: 0.3rem;
+  padding-left: 0.4rem;
+}
+
+.hand-data-empty {
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
+  text-align: center;
+  padding: 0.5rem;
 }
 
 /* Transcript Area */
@@ -395,9 +475,16 @@
 }
 
 /* Responsive */
-@media (max-width: 600px) {
+@media (max-width: 800px) {
   .voice-chat {
+    flex-direction: column;
     padding: 1rem;
+  }
+
+  .left-panel {
+    width: 100%;
+    min-width: 0;
+    flex-shrink: 1;
   }
 
   .transcript-area {

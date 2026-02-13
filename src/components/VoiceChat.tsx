@@ -233,77 +233,152 @@ export function VoiceChat() {
 
   return (
     <div className="voice-chat">
-      <div className="status-bar">
-        <span className={getStatusIndicatorClass()}></span>
-        <span className="status-text">
-          {sessionState === 'connected' ? 'Connected' : sessionState}
-        </span>
-      </div>
+      <div className="left-panel">
+        <HandAnimation fingerAngles={fingerAngles} />
 
-      <div className="iot-info">
-        <span>Endpoint: {iotEndpoint}</span>
-        <span>Topic: {IOT_TOPIC}</span>
-        <span>Hand Stream: {isHandStreamConnected ? 'Connected' : 'Disconnected'}</span>
-      </div>
-
-      <HandAnimation fingerAngles={fingerAngles} />
-
-      <div className="transcript-area" ref={transcriptRef}>
-        {transcripts.length === 0 && actionLog.length === 0 ? (
-          <p className="placeholder-text">
-            Speak and your words will be cleaned and sent to IoT...
-          </p>
-        ) : (
-          <>
-            {transcripts.filter((t) => t.role === 'user').map((t, index) => (
-              <div key={`t-${index}`} className={`transcript-message ${t.role}`}>
-                <span className="role-label">You</span>
-                <p className="message-content">{t.content}</p>
+        <div className="hand-data-panel">
+          <div className="hand-data-header">Hand State Raw Data</div>
+          {handState ? (
+            <div className="hand-data-grid">
+              <div className="hand-data-row">
+                <span className="hand-data-label">id</span>
+                <span className="hand-data-value">{handState.id}</span>
               </div>
-            ))}
-            {actionLog.map((entry) => (
-              <div key={entry.id} className={`action-entry action-${entry.type}`}>
-                <span className="action-icon">{getActionIcon(entry.type)}</span>
-                <div className="action-content">
-                  <span className="action-message">{entry.message}</span>
-                  {entry.detail && <span className="action-detail">{entry.detail}</span>}
+              <div className="hand-data-row">
+                <span className="hand-data-label">deviceName</span>
+                <span className="hand-data-value">{handState.deviceName}</span>
+              </div>
+              <div className="hand-data-row">
+                <span className="hand-data-label">gesture</span>
+                <span className="hand-data-value">{handState.gesture ?? 'null'}</span>
+              </div>
+              <div className="hand-data-row">
+                <span className="hand-data-label">letter</span>
+                <span className="hand-data-value">{handState.letter ?? 'null'}</span>
+              </div>
+              <div className="hand-data-separator">Thumb</div>
+              <div className="hand-data-row">
+                <span className="hand-data-label">thumbAngle1</span>
+                <span className="hand-data-value">{handState.thumbAngle1 ?? 'null'}</span>
+              </div>
+              <div className="hand-data-row">
+                <span className="hand-data-label">thumbAngle2</span>
+                <span className="hand-data-value">{handState.thumbAngle2 ?? 'null'}</span>
+              </div>
+              <div className="hand-data-separator">Index</div>
+              <div className="hand-data-row">
+                <span className="hand-data-label">indexAngle1</span>
+                <span className="hand-data-value">{handState.indexAngle1 ?? 'null'}</span>
+              </div>
+              <div className="hand-data-row">
+                <span className="hand-data-label">indexAngle2</span>
+                <span className="hand-data-value">{handState.indexAngle2 ?? 'null'}</span>
+              </div>
+              <div className="hand-data-separator">Middle</div>
+              <div className="hand-data-row">
+                <span className="hand-data-label">middleAngle1</span>
+                <span className="hand-data-value">{handState.middleAngle1 ?? 'null'}</span>
+              </div>
+              <div className="hand-data-row">
+                <span className="hand-data-label">middleAngle2</span>
+                <span className="hand-data-value">{handState.middleAngle2 ?? 'null'}</span>
+              </div>
+              <div className="hand-data-separator">Ring</div>
+              <div className="hand-data-row">
+                <span className="hand-data-label">ringAngle1</span>
+                <span className="hand-data-value">{handState.ringAngle1 ?? 'null'}</span>
+              </div>
+              <div className="hand-data-row">
+                <span className="hand-data-label">ringAngle2</span>
+                <span className="hand-data-value">{handState.ringAngle2 ?? 'null'}</span>
+              </div>
+              <div className="hand-data-separator">Timestamp</div>
+              <div className="hand-data-row">
+                <span className="hand-data-label">timestamp</span>
+                <span className="hand-data-value">{handState.timestamp}</span>
+              </div>
+              <div className="hand-data-row">
+                <span className="hand-data-label">createdAt</span>
+                <span className="hand-data-value">{handState.createdAt ?? 'null'}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="hand-data-empty">No hand data received yet</div>
+          )}
+        </div>
+      </div>
+
+      <div className="right-panel">
+        <div className="status-bar">
+          <span className={getStatusIndicatorClass()}></span>
+          <span className="status-text">
+            {sessionState === 'connected' ? 'Connected' : sessionState}
+          </span>
+        </div>
+
+        <div className="iot-info">
+          <span>Endpoint: {iotEndpoint}</span>
+          <span>Topic: {IOT_TOPIC}</span>
+          <span>Hand Stream: {isHandStreamConnected ? 'Connected' : 'Disconnected'}</span>
+        </div>
+
+        <div className="transcript-area" ref={transcriptRef}>
+          {transcripts.length === 0 && actionLog.length === 0 ? (
+            <p className="placeholder-text">
+              Speak and your words will be cleaned and sent to IoT...
+            </p>
+          ) : (
+            <>
+              {transcripts.filter((t) => t.role === 'user').map((t, index) => (
+                <div key={`t-${index}`} className={`transcript-message ${t.role}`}>
+                  <span className="role-label">You</span>
+                  <p className="message-content">{t.content}</p>
                 </div>
-              </div>
-            ))}
-          </>
-        )}
-      </div>
+              ))}
+              {actionLog.map((entry) => (
+                <div key={entry.id} className={`action-entry action-${entry.type}`}>
+                  <span className="action-icon">{getActionIcon(entry.type)}</span>
+                  <div className="action-content">
+                    <span className="action-message">{entry.message}</span>
+                    {entry.detail && <span className="action-detail">{entry.detail}</span>}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
 
-      <div className="controls">
-        <p className={`instruction-text ${isRecording ? 'listening' : ''} ${isPlaying ? 'speaking' : ''}`}>
-          {statusText}
-        </p>
+        <div className="controls">
+          <p className={`instruction-text ${isRecording ? 'listening' : ''} ${isPlaying ? 'speaking' : ''}`}>
+            {statusText}
+          </p>
 
-        <button
-          className={getMicButtonClass()}
-          onClick={handleMicClick}
-          onContextMenu={(e) => e.preventDefault()}
-          disabled={sessionState === 'connecting'}
-        >
-          <svg
-            className="mic-icon"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            width="48"
-            height="48"
+          <button
+            className={getMicButtonClass()}
+            onClick={handleMicClick}
+            onContextMenu={(e) => e.preventDefault()}
+            disabled={sessionState === 'connecting'}
           >
-            {isRecording ? (
-              // Stop icon when recording
-              <rect x="6" y="6" width="12" height="12" rx="2" />
-            ) : (
-              // Mic icon when not recording
-              <>
-                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
-                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
-              </>
-            )}
-          </svg>
-        </button>
+            <svg
+              className="mic-icon"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              width="48"
+              height="48"
+            >
+              {isRecording ? (
+                // Stop icon when recording
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+              ) : (
+                // Mic icon when not recording
+                <>
+                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+                </>
+              )}
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   );
