@@ -246,19 +246,19 @@ export function VoiceChat() {
             <div className="hand-data-grid">
               <div className="hand-data-row">
                 <span className="hand-data-label">id</span>
-                <span className="hand-data-value">{handState.id}</span>
+                <span className="hand-data-value meta">{handState.id}</span>
               </div>
               <div className="hand-data-row">
                 <span className="hand-data-label">deviceName</span>
-                <span className="hand-data-value">{handState.deviceName}</span>
+                <span className="hand-data-value meta">{handState.deviceName}</span>
               </div>
               <div className="hand-data-row">
                 <span className="hand-data-label">gesture</span>
-                <span className="hand-data-value">{handState.gesture ?? 'null'}</span>
+                <span className="hand-data-value text">{handState.gesture ?? 'null'}</span>
               </div>
               <div className="hand-data-row">
                 <span className="hand-data-label">letter</span>
-                <span className="hand-data-value">{handState.letter ?? 'null'}</span>
+                <span className="hand-data-value text">{handState.letter ?? 'null'}</span>
               </div>
               <div className="hand-data-separator">Thumb</div>
               <div className="hand-data-row">
@@ -299,11 +299,11 @@ export function VoiceChat() {
               <div className="hand-data-separator">Timestamp</div>
               <div className="hand-data-row">
                 <span className="hand-data-label">timestamp</span>
-                <span className="hand-data-value">{handState.timestamp}</span>
+                <span className="hand-data-value meta">{handState.timestamp}</span>
               </div>
               <div className="hand-data-row">
                 <span className="hand-data-label">createdAt</span>
-                <span className="hand-data-value">{handState.createdAt ?? 'null'}</span>
+                <span className="hand-data-value meta">{handState.createdAt ?? 'null'}</span>
               </div>
             </div>
           ) : (
