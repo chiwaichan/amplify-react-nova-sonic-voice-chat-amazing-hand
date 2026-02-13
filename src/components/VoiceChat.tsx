@@ -249,10 +249,6 @@ export function VoiceChat() {
                 <span className="hand-data-value meta">{handState.id}</span>
               </div>
               <div className="hand-data-row">
-                <span className="hand-data-label">deviceName</span>
-                <span className="hand-data-value meta">{handState.deviceName}</span>
-              </div>
-              <div className="hand-data-row">
                 <span className="hand-data-label">gesture</span>
                 <span className="hand-data-value text">{handState.gesture ?? 'null'}</span>
               </div>
