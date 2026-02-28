@@ -240,6 +240,18 @@ export function VoiceChat() {
 
         <HandAnimation fingerAngles={fingerAngles} />
 
+        {handState?.videoUrl && (
+          <div className="video-container">
+            <video
+              key={handState.videoUrl}
+              src={handState.videoUrl}
+              autoPlay
+              muted
+              controls
+            />
+          </div>
+        )}
+
         <div className="hand-data-panel">
           <div className="hand-data-header">Hand State Raw Data</div>
           {handState ? (

@@ -15,6 +15,7 @@ const schema = a.schema({
       thumbAngle1: a.integer(),
       thumbAngle2: a.integer(),
       timestamp: a.integer().required(),
+      videoUrl: a.string(),
     })
     .authorization((allow) => [allow.publicApiKey()]),
 });

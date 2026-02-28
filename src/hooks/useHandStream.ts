@@ -17,6 +17,7 @@ export interface HandState {
   thumbAngle1?: number | null;
   thumbAngle2?: number | null;
   timestamp: number;
+  videoUrl?: string | null;
   createdAt?: string;
 }
 
@@ -51,6 +52,7 @@ export function useHandStream(deviceName?: string): {
                 thumbAngle1
                 thumbAngle2
                 timestamp
+                videoUrl
                 createdAt
               }
             }
@@ -95,6 +97,7 @@ export function useHandStream(deviceName?: string): {
           thumbAngle1
           thumbAngle2
           timestamp
+          videoUrl
           createdAt
         }
       }
