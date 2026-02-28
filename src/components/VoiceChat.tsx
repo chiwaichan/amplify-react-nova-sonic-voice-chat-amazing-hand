@@ -240,8 +240,8 @@ export function VoiceChat() {
 
         <HandAnimation fingerAngles={fingerAngles} />
 
-        {handState?.videoUrl && (
-          <div className="video-container">
+        <div className="video-container">
+          {handState?.videoUrl ? (
             <video
               key={handState.videoUrl}
               src={handState.videoUrl}
@@ -249,8 +249,10 @@ export function VoiceChat() {
               muted
               controls
             />
-          </div>
-        )}
+          ) : (
+            <div className="video-placeholder">No video available</div>
+          )}
+        </div>
 
         <div className="hand-data-panel">
           <div className="hand-data-header">Hand State Raw Data</div>

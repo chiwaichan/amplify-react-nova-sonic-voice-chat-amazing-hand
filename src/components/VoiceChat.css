@@ -114,6 +114,16 @@
   border-radius: 12px;
 }
 
+.video-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  color: rgba(255, 255, 255, 0.35);
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
 /* Hand Data Panel */
 .hand-data-panel {
   padding: 0.75rem 1rem;
