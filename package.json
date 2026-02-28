@@ -16,8 +16,13 @@
     "@aws-sdk/client-bedrock-runtime": "3.842.0",
     "@aws-sdk/client-iot": "^3.984.0",
     "@aws-sdk/client-iot-data-plane": "^3.984.0",
+    "@aws-sdk/client-kinesis-video": "^3.1000.0",
+    "@aws-sdk/client-kinesis-video-archived-media": "^3.1000.0",
+    "@aws-sdk/client-kinesis-video-signaling": "^3.1000.0",
     "@types/three": "^0.182.0",
+    "amazon-kinesis-video-streams-webrtc": "^2.5.0",
     "aws-amplify": "^6.15.10",
+    "hls.js": "^1.6.15",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "three": "^0.182.0"

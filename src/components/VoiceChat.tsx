@@ -4,10 +4,14 @@ import type { ToolUseEvent } from '../hooks/useNovaSonic';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { useHandStream } from '../hooks/useHandStream';
+import { useKvsViewer } from '../hooks/useKvsViewer';
 import { publishSentence, getIoTEndpoint, IOT_TOPIC } from '../utils/iotPublisher';
 import { HandAnimation } from './HandAnimation';
 import type { FingerAngles } from './HandAnimation';
+import outputs from '../../amplify_outputs.json';
 import './VoiceChat.css';
+
+const KVS_STREAM_NAME = (outputs as any).custom?.kvsStreamName || '';
 
 interface ActionLogEntry {
   id: string;
@@ -28,6 +32,9 @@ export function VoiceChat() {
 
   // Hand stream subscription for real-time servo updates
   const { latestState: handState, isConnected: isHandStreamConnected } = useHandStream('XIAOAmazingHandRight');
+
+  // KVS live stream viewer (HLS)
+  const { status: kvsStatus, videoRef: liveVideoRef } = useKvsViewer(KVS_STREAM_NAME);
 
   // Convert HandState to FingerAngles for the animation
   const fingerAngles: FingerAngles | undefined = useMemo(() => {
@@ -240,7 +247,30 @@ export function VoiceChat() {
 
         <HandAnimation fingerAngles={fingerAngles} />
 
+        <div className="video-container live-video-container">
+          <div className="video-label">
+            Live Stream
+            <span className={`live-status live-status-${kvsStatus}`}>
+              {kvsStatus === 'streaming' ? 'LIVE' : kvsStatus}
+            </span>
+          </div>
+          <video
+            ref={liveVideoRef}
+            autoPlay
+            playsInline
+            muted
+          />
+          {kvsStatus !== 'streaming' && (
+            <div className="video-placeholder">
+              {kvsStatus === 'connecting' ? 'Connecting...' :
+               kvsStatus === 'error' ? 'Connection error, retrying...' :
+               'Camera offline'}
+            </div>
+          )}
+        </div>
+
         <div className="video-container">
+          <div className="video-label">Recorded Clip</div>
           {handState?.videoUrl ? (
             <video
               key={handState.videoUrl}

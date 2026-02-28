@@ -80,9 +80,26 @@ new CfnPolicy(authStack, 'RoboticHandIoTPolicy', {
   },
 });
 
-// Expose the IoT policy name so the frontend can attach it at runtime
+// Grant authenticated users permission to view KVS video streams via HLS
+const kvsStreamName = 'jetson-thor-stream';
+backend.auth.resources.authenticatedUserIamRole.addToPrincipalPolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: [
+      'kinesisvideo:GetDataEndpoint',
+      'kinesisvideo:GetHLSStreamingSessionURL',
+      'kinesisvideo:DescribeStream',
+    ],
+    resources: [
+      `arn:aws:kinesisvideo:us-east-1:${authStack.account}:stream/${kvsStreamName}/*`,
+    ],
+  })
+);
+
+// Expose the IoT policy name and KVS stream name so the frontend can use them
 backend.addOutput({
   custom: {
     iotPolicyName,
+    kvsStreamName,
   },
 });
