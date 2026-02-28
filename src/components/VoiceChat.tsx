@@ -349,7 +349,7 @@ export function VoiceChat() {
         <div className="transcript-area" ref={transcriptRef}>
           {transcripts.length === 0 && actionLog.length === 0 ? (
             <p className="placeholder-text">
-              Speak and your words will be cleaned and sent to IoT...
+              Speak and your message will be sent to AWS IoT...
             </p>
           ) : (
             <>
