@@ -306,6 +306,17 @@ export function VoiceChat() {
                 <span className="hand-data-label">ringAngle2</span>
                 <span className="hand-data-value">{handState.ringAngle2 ?? 'null'}</span>
               </div>
+              <div className="hand-data-separator">Video</div>
+              <div className="hand-data-row">
+                <span className="hand-data-label">videoUrl</span>
+                <span className="hand-data-value meta">
+                  {handState.videoUrl ? (
+                    <a href={handState.videoUrl} target="_blank" rel="noopener noreferrer" className="hand-data-link">
+                      {(() => { try { return new URL(handState.videoUrl).pathname.split('/').pop() || handState.videoUrl; } catch { return handState.videoUrl; } })()}
+                    </a>
+                  ) : 'null'}
+                </span>
+              </div>
               <div className="hand-data-separator">Timestamp</div>
               <div className="hand-data-row">
                 <span className="hand-data-label">timestamp</span>

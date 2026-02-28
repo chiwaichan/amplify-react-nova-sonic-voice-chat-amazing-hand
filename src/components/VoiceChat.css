@@ -182,6 +182,16 @@
   color: #ffab40;
 }
 
+.hand-data-link {
+  color: #69f0ae;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.hand-data-link:hover {
+  text-decoration: underline;
+}
+
 .hand-data-separator {
   font-size: 0.6rem;
   font-weight: 600;
