@@ -41,8 +41,11 @@ export function VoiceChat() {
   useEffect(() => {
     if (!handState?.letter || !handState.id) return;
     if (handState.id === lastHandStateIdRef.current) return;
-    if (handState.videoUrl) return;
     lastHandStateIdRef.current = handState.id;
+    if (handState.videoUrl) {
+      setSignedLetters((prev) => [...prev, { letter: '\n', timestamp: handState.timestamp }]);
+      return;
+    }
     setSignedLetters((prev) => [...prev, { letter: handState.letter!, timestamp: handState.timestamp }]);
   }, [handState?.id, handState?.letter, handState?.timestamp]);
 
@@ -375,9 +378,13 @@ export function VoiceChat() {
           <div className="signed-history-header">Signed Letters</div>
           {signedLetters.length > 0 ? (
             <div className="signed-history-letters">
-              {signedLetters.map((entry, i) => (
-                <span key={i} className="signed-letter">{entry.letter}</span>
-              ))}
+              {signedLetters.map((entry, i) =>
+                entry.letter === '\n' ? (
+                  <div key={i} className="signed-letter-break" />
+                ) : (
+                  <span key={i} className="signed-letter">{entry.letter}</span>
+                )
+              )}
             </div>
           ) : (
             <div className="signed-history-empty">No letters signed yet</div>
