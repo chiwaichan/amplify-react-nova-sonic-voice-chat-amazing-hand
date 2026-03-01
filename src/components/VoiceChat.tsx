@@ -41,6 +41,7 @@ export function VoiceChat() {
   useEffect(() => {
     if (!handState?.letter || !handState.id) return;
     if (handState.id === lastHandStateIdRef.current) return;
+    if (handState.videoUrl) return;
     lastHandStateIdRef.current = handState.id;
     setSignedLetters((prev) => [...prev, { letter: handState.letter!, timestamp: handState.timestamp }]);
   }, [handState?.id, handState?.letter, handState?.timestamp]);
@@ -291,27 +292,7 @@ export function VoiceChat() {
 
   return (
     <div className="voice-chat">
-      <div className="left-panel">
-        <div className="hand-stream-status">
-          Hand Stream: {isHandStreamConnected ? 'Connected' : 'Disconnected'}
-        </div>
-
-        <HandAnimation fingerAngles={fingerAngles} />
-
-        <div className="video-container">
-          {handState?.videoUrl ? (
-            <video
-              key={handState.videoUrl}
-              src={handState.videoUrl}
-              autoPlay
-              muted
-              controls
-            />
-          ) : (
-            <div className="video-placeholder">No video available</div>
-          )}
-        </div>
-
+      <div className="data-panel">
         <div className="hand-data-panel">
           <div className="hand-data-header">Hand State Raw Data</div>
           {handState ? (
@@ -400,6 +381,28 @@ export function VoiceChat() {
             </div>
           ) : (
             <div className="signed-history-empty">No letters signed yet</div>
+          )}
+        </div>
+      </div>
+
+      <div className="center-panel">
+        <div className="hand-stream-status">
+          Hand Stream: {isHandStreamConnected ? 'Connected' : 'Disconnected'}
+        </div>
+
+        <HandAnimation fingerAngles={fingerAngles} />
+
+        <div className="video-container">
+          {handState?.videoUrl ? (
+            <video
+              key={handState.videoUrl}
+              src={handState.videoUrl}
+              autoPlay
+              muted
+              controls
+            />
+          ) : (
+            <div className="video-placeholder">No video available</div>
           )}
         </div>
       </div>

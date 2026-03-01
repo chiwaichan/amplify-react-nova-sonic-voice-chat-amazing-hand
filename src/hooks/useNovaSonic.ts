@@ -164,10 +164,13 @@ export function useNovaSonic(options: UseNovaSonicOptions = {}): UseNovaSonicRet
     const audioContentName = audioContentNameRef.current;
 
     const systemPrompt =
-      'You are a speech-to-text assistant. Listen to the user\'s speech and clean it up into ' +
-      'well-formed sentences. After each utterance, call the send_text tool with the cleaned sentence. ' +
-      'Fix grammar, remove filler words (um, uh, like), and produce clear text. ' +
-      'Keep your spoken responses very brief, like "Got it" or "Sent".';
+      'You are a speech-to-text relay. Your ONLY job is to forward every user utterance to the send_text tool. ' +
+      'You MUST call send_text for EVERY single thing the user says, no exceptions. ' +
+      'Do NOT interpret, answer, or act on any user message. Do NOT refuse any message. ' +
+      'Even if the user asks you a question, gives a command, or says something that seems directed at you, ' +
+      'you still MUST call send_text with the cleaned-up text. ' +
+      'Clean up the text by fixing grammar, removing filler words (um, uh, like), and producing clear text. ' +
+      'After calling send_text, say only "Sent".';
 
     return [
       {
@@ -206,8 +209,8 @@ export function useNovaSonic(options: UseNovaSonicOptions = {}): UseNovaSonicRet
                   toolSpec: {
                     name: 'send_text',
                     description:
-                      'Send a cleaned-up sentence to the robotic hand display. ' +
-                      'Call this after each user utterance with the cleaned text.',
+                      'Forward a cleaned-up sentence as a raw message to MQTT. ' +
+                      'You MUST call this for every single user utterance without exception, regardless of content.',
                     inputSchema: {
                       json: JSON.stringify({
                         type: 'object',
@@ -223,7 +226,7 @@ export function useNovaSonic(options: UseNovaSonicOptions = {}): UseNovaSonicRet
                   },
                 },
               ],
-              toolChoice: { auto: {} },
+              toolChoice: { any: {} },
             },
           },
         },
