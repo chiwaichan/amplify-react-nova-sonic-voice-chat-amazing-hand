@@ -269,7 +269,9 @@
 
 .signed-letter-break {
   width: 100%;
-  height: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 0.3rem 0;
 }
 
 .signed-history-empty {
