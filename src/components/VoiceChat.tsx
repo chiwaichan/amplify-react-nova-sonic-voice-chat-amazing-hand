@@ -29,6 +29,7 @@ export function VoiceChat() {
   const [iotEndpoint, setIotEndpoint] = useState<string>('resolving...');
   const [pendingRecord, setPendingRecord] = useState(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
+  const micLevelRef = useRef<HTMLDivElement>(null);
 
   // Hand stream subscription for real-time servo updates
   const { latestState: handState, isConnected: isHandStreamConnected } = useHandStream('XIAOAmazingHandRight');
@@ -117,10 +118,15 @@ export function VoiceChat() {
     onToolUse: handleToolUse,
   });
 
+  const onAudioLevel = useCallback((level: number) => {
+    micLevelRef.current?.style.setProperty('--mic-level', String(level));
+  }, []);
+
   const { isRecording, startRecording, stopRecording, error: recorderError } = useAudioRecorder({
     onAudioData: (base64Audio) => {
       sendAudio(base64Audio);
     },
+    onAudioLevel,
   });
 
   // Build a single chronological feed from transcripts + action log
@@ -178,6 +184,13 @@ export function VoiceChat() {
       setStatusText('Click mic to start talking');
     }
   }, [sessionState, isRecording, isPlaying, recorderError]);
+
+  // Reset mic level when recording stops
+  useEffect(() => {
+    if (!isRecording) {
+      micLevelRef.current?.style.setProperty('--mic-level', '0');
+    }
+  }, [isRecording]);
 
   // Cleanup on unmount (no auto-connect on load to save Bedrock costs)
   useEffect(() => {
@@ -435,6 +448,16 @@ export function VoiceChat() {
               )}
             </svg>
           </button>
+
+          {isRecording && (
+            <div
+              className="mic-level-bar-container"
+              ref={micLevelRef}
+              style={{ '--mic-level': '0' } as React.CSSProperties}
+            >
+              <div className="mic-level-bar-fill" />
+            </div>
+          )}
         </div>
       </div>
     </div>

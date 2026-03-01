@@ -405,6 +405,26 @@
   transform: scale(1.15);
 }
 
+/* Mic Level Bar */
+.mic-level-bar-container {
+  --mic-level: 0;
+  width: 100%;
+  max-width: 240px;
+  height: 6px;
+  margin-top: 1rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.mic-level-bar-fill {
+  height: 100%;
+  width: calc(var(--mic-level) * 100%);
+  background: linear-gradient(90deg, #ff9900, #ff5500);
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(255, 153, 0, calc(0.3 + 0.5 * var(--mic-level)));
+}
+
 /* Animations */
 @keyframes pulse-glow {
   0%, 100% {

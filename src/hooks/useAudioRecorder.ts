@@ -36,6 +36,7 @@ registerProcessor('audio-capture-processor', AudioCaptureProcessor);
 
 interface UseAudioRecorderOptions {
   onAudioData?: (base64Audio: string) => void;
+  onAudioLevel?: (level: number) => void;
 }
 
 interface UseAudioRecorderReturn {
@@ -46,7 +47,7 @@ interface UseAudioRecorderReturn {
 }
 
 export function useAudioRecorder(options: UseAudioRecorderOptions = {}): UseAudioRecorderReturn {
-  const { onAudioData } = options;
+  const { onAudioData, onAudioLevel } = options;
 
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -131,8 +132,20 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}): UseAudi
 
       // Handle audio data from worklet
       workletNode.port.onmessage = (event) => {
-        if (event.data.type === 'audio' && onAudioData) {
+        if (event.data.type === 'audio') {
           const audioData = event.data.audioData as Float32Array;
+
+          // Calculate RMS audio level and fire callback
+          if (onAudioLevel) {
+            let sumSq = 0;
+            for (let i = 0; i < audioData.length; i++) {
+              sumSq += audioData[i] * audioData[i];
+            }
+            const rms = Math.sqrt(sumSq / audioData.length) * 4;
+            onAudioLevel(Math.min(rms, 1));
+          }
+
+          if (!onAudioData) return;
 
           // Resample to 16kHz if needed
           const resampledData = resampleAudio(
@@ -160,7 +173,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}): UseAudi
       const message = err instanceof Error ? `${err.name}: ${err.message}` : 'Failed to start recording';
       setError(message);
     }
-  }, [onAudioData]);
+  }, [onAudioData, onAudioLevel]);
 
   const stopRecording = useCallback(() => {
     console.log('[AudioRecorder] stopRecording called');
