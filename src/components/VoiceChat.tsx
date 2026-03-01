@@ -17,6 +17,10 @@ interface ActionLogEntry {
   detail?: string;
 }
 
+type FeedItem =
+  | { kind: 'transcript'; role: 'user' | 'assistant'; content: string; timestamp: number; key: string }
+  | { kind: 'action'; entry: ActionLogEntry; key: string; timestamp: number };
+
 let actionIdCounter = 0;
 
 export function VoiceChat() {
@@ -119,12 +123,42 @@ export function VoiceChat() {
     },
   });
 
-  // Auto-scroll to bottom when transcripts or action log change
+  // Build a single chronological feed from transcripts + action log
+  const feed = useMemo<FeedItem[]>(() => {
+    const items: FeedItem[] = [];
+
+    for (let i = 0; i < transcripts.length; i++) {
+      const t = transcripts[i];
+      if (t.role === 'user') {
+        items.push({
+          kind: 'transcript',
+          role: t.role,
+          content: t.content,
+          timestamp: t.timestamp,
+          key: `t-${i}`,
+        });
+      }
+    }
+
+    for (const entry of actionLog) {
+      items.push({
+        kind: 'action',
+        entry,
+        timestamp: entry.timestamp,
+        key: entry.id,
+      });
+    }
+
+    items.sort((a, b) => a.timestamp - b.timestamp);
+    return items;
+  }, [transcripts, actionLog]);
+
+  // Auto-scroll to bottom when feed changes
   useLayoutEffect(() => {
     if (transcriptRef.current) {
       transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
     }
-  }, [transcripts, actionLog]);
+  }, [feed]);
 
   // Update status text based on state
   useEffect(() => {
@@ -347,28 +381,27 @@ export function VoiceChat() {
         </div>
 
         <div className="transcript-area" ref={transcriptRef}>
-          {transcripts.length === 0 && actionLog.length === 0 ? (
+          {feed.length === 0 ? (
             <p className="placeholder-text">
               Speak and your message will be sent to AWS IoT...
             </p>
           ) : (
-            <>
-              {transcripts.filter((t) => t.role === 'user').map((t, index) => (
-                <div key={`t-${index}`} className={`transcript-message ${t.role}`}>
+            feed.map((item) =>
+              item.kind === 'transcript' ? (
+                <div key={item.key} className={`transcript-message ${item.role}`}>
                   <span className="role-label">You</span>
-                  <p className="message-content">{t.content}</p>
+                  <p className="message-content">{item.content}</p>
                 </div>
-              ))}
-              {actionLog.map((entry) => (
-                <div key={entry.id} className={`action-entry action-${entry.type}`}>
-                  <span className="action-icon">{getActionIcon(entry.type)}</span>
+              ) : (
+                <div key={item.key} className={`action-entry action-${item.entry.type}`}>
+                  <span className="action-icon">{getActionIcon(item.entry.type)}</span>
                   <div className="action-content">
-                    <span className="action-message">{entry.message}</span>
-                    {entry.detail && <span className="action-detail">{entry.detail}</span>}
+                    <span className="action-message">{item.entry.message}</span>
+                    {item.entry.detail && <span className="action-detail">{item.entry.detail}</span>}
                   </div>
                 </div>
-              ))}
-            </>
+              )
+            )
           )}
         </div>
 

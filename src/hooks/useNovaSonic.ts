@@ -13,6 +13,7 @@ type SessionState = 'disconnected' | 'connecting' | 'connected' | 'error';
 interface Transcript {
   role: 'user' | 'assistant';
   content: string;
+  timestamp: number;
 }
 
 export interface ToolUseEvent {
@@ -339,7 +340,7 @@ export function useNovaSonic(options: UseNovaSonicOptions = {}): UseNovaSonicRet
 
             if (content && !content.includes('{ "interrupted" : true }')) {
               log(`[${sid}] Text output (${role}): ${content.substring(0, 50)}...`);
-              const transcript: Transcript = { role, content };
+              const transcript: Transcript = { role, content, timestamp: Date.now() };
               setTranscripts((prev) => {
                 // Check for duplicate - don't add if last message already ends with this content
                 if (prev.length > 0 && prev[prev.length - 1].role === role) {
