@@ -34,6 +34,17 @@ export function VoiceChat() {
   // Hand stream subscription for real-time servo updates
   const { latestState: handState, isConnected: isHandStreamConnected } = useHandStream('XIAOAmazingHandRight');
 
+  // Accumulate signed letters from hand state updates
+  const [signedLetters, setSignedLetters] = useState<{ letter: string; timestamp: number }[]>([]);
+  const lastHandStateIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!handState?.letter || !handState.id) return;
+    if (handState.id === lastHandStateIdRef.current) return;
+    lastHandStateIdRef.current = handState.id;
+    setSignedLetters((prev) => [...prev, { letter: handState.letter!, timestamp: handState.timestamp }]);
+  }, [handState?.id, handState?.letter, handState?.timestamp]);
+
   // Convert HandState to FingerAngles for the animation
   const fingerAngles: FingerAngles | undefined = useMemo(() => {
     if (!handState) return undefined;
@@ -376,6 +387,19 @@ export function VoiceChat() {
             </div>
           ) : (
             <div className="hand-data-empty">No hand data received yet</div>
+          )}
+        </div>
+
+        <div className="signed-history-panel">
+          <div className="signed-history-header">Signed Letters</div>
+          {signedLetters.length > 0 ? (
+            <div className="signed-history-letters">
+              {signedLetters.map((entry, i) => (
+                <span key={i} className="signed-letter">{entry.letter}</span>
+              ))}
+            </div>
+          ) : (
+            <div className="signed-history-empty">No letters signed yet</div>
           )}
         </div>
       </div>

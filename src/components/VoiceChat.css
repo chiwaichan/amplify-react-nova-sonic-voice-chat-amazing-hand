@@ -214,6 +214,59 @@
   padding: 0.75rem;
 }
 
+/* Signed Letters History */
+.signed-history-panel {
+  padding: 0.75rem 1rem;
+  background: rgba(8, 10, 18, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+.signed-history-header {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.signed-history-letters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.signed-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0 0.3rem;
+  background: rgba(255, 153, 0, 0.15);
+  border: 1px solid rgba(255, 153, 0, 0.3);
+  border-radius: 4px;
+  color: #ffab40;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.signed-history-empty {
+  color: rgba(255, 255, 255, 0.35);
+  font-style: italic;
+  text-align: center;
+  padding: 0.75rem;
+}
+
 /* Transcript Area */
 .transcript-area {
   flex: 1;
