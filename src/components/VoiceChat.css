@@ -114,6 +114,11 @@
   border-radius: 12px;
 }
 
+.video-container video::-webkit-media-controls {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
 .video-placeholder {
   display: flex;
   align-items: center;
