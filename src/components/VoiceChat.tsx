@@ -23,7 +23,12 @@ type FeedItem =
 
 let actionIdCounter = 0;
 
-export function VoiceChat() {
+interface VoiceChatProps {
+  signOut?: () => void;
+  userLogin?: string;
+}
+
+export function VoiceChat({ signOut, userLogin }: VoiceChatProps) {
   const [statusText, setStatusText] = useState('Click mic to start talking');
   const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
   const [iotEndpoint, setIotEndpoint] = useState<string>('resolving...');
@@ -301,7 +306,21 @@ export function VoiceChat() {
   };
 
   return (
-    <div className="voice-chat">
+    <>
+      <header className="app-header">
+        <div className="app-brand">
+          <h1>Amazing Hand</h1>
+          <span className="app-subtitle">ASL Sign Translator</span>
+        </div>
+        <div className="current-letter">
+          {handState?.letter || ''}
+        </div>
+        <div className="user-info">
+          <span>{userLogin}</span>
+          <button onClick={signOut} className="sign-out-btn">Sign out</button>
+        </div>
+      </header>
+      <div className="voice-chat">
       <div className="data-panel">
         <div className="signed-history-panel">
           <div className="signed-history-header">Signed Letters</div>
@@ -505,5 +524,6 @@ export function VoiceChat() {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -49,6 +49,17 @@
   font-weight: 500;
 }
 
+.current-letter {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #ff9900;
+  text-transform: uppercase;
+  min-width: 4rem;
+  text-align: center;
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(255, 153, 0, 0.4);
+}
+
 .user-info {
   display: flex;
   align-items: center;
