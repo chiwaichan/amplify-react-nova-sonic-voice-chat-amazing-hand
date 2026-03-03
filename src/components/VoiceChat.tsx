@@ -37,10 +37,17 @@ export function VoiceChat() {
   // Accumulate signed letters from hand state updates
   const [signedLetters, setSignedLetters] = useState<{ letter: string; timestamp: number }[]>([]);
   const lastHandStateIdRef = useRef<string | null>(null);
+  const initialLoadRef = useRef(true);
 
   useEffect(() => {
     if (!handState?.letter || !handState.id) return;
     if (handState.id === lastHandStateIdRef.current) return;
+    // Skip the first hand state (loaded from DB on mount)
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      lastHandStateIdRef.current = handState.id;
+      return;
+    }
     lastHandStateIdRef.current = handState.id;
     if (handState.videoUrl) {
       setSignedLetters((prev) => [...prev, { letter: '\n', timestamp: handState.timestamp }]);
@@ -296,6 +303,23 @@ export function VoiceChat() {
   return (
     <div className="voice-chat">
       <div className="data-panel">
+        <div className="signed-history-panel">
+          <div className="signed-history-header">Signed Letters</div>
+          {signedLetters.length > 0 ? (
+            <div className="signed-history-letters">
+              {signedLetters.map((entry, i) =>
+                entry.letter === '\n' ? (
+                  <div key={i} className="signed-letter-break" />
+                ) : (
+                  <span key={i} className="signed-letter">{entry.letter}</span>
+                )
+              )}
+            </div>
+          ) : (
+            <div className="signed-history-empty">No letters signed yet</div>
+          )}
+        </div>
+
         <div className="hand-data-panel">
           <div className="hand-data-header">Hand State Raw Data</div>
           {handState ? (
@@ -371,23 +395,6 @@ export function VoiceChat() {
             </div>
           ) : (
             <div className="hand-data-empty">No hand data received yet</div>
-          )}
-        </div>
-
-        <div className="signed-history-panel">
-          <div className="signed-history-header">Signed Letters</div>
-          {signedLetters.length > 0 ? (
-            <div className="signed-history-letters">
-              {signedLetters.map((entry, i) =>
-                entry.letter === '\n' ? (
-                  <div key={i} className="signed-letter-break" />
-                ) : (
-                  <span key={i} className="signed-letter">{entry.letter}</span>
-                )
-              )}
-            </div>
-          ) : (
-            <div className="signed-history-empty">No letters signed yet</div>
           )}
         </div>
       </div>
