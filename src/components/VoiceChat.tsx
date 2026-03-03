@@ -325,56 +325,56 @@ export function VoiceChat() {
           {handState ? (
             <div className="hand-data-grid">
               <div className="hand-data-row">
-                <span className="hand-data-label">id</span>
+                <span className="hand-data-label">ID</span>
                 <span className="hand-data-value meta">{handState.id}</span>
               </div>
               <div className="hand-data-row">
-                <span className="hand-data-label">gesture</span>
+                <span className="hand-data-label">Gesture</span>
                 <span className="hand-data-value text">{handState.gesture ?? 'null'}</span>
               </div>
               <div className="hand-data-row">
-                <span className="hand-data-label">letter</span>
+                <span className="hand-data-label">Letter</span>
                 <span className="hand-data-value text">{handState.letter ?? 'null'}</span>
               </div>
               <div className="hand-data-separator">Thumb</div>
               <div className="hand-data-row">
-                <span className="hand-data-label">thumbAngle1</span>
+                <span className="hand-data-label">Angle 1</span>
                 <span className="hand-data-value">{handState.thumbAngle1 ?? 'null'}</span>
               </div>
               <div className="hand-data-row">
-                <span className="hand-data-label">thumbAngle2</span>
+                <span className="hand-data-label">Angle 2</span>
                 <span className="hand-data-value">{handState.thumbAngle2 ?? 'null'}</span>
               </div>
               <div className="hand-data-separator">Index</div>
               <div className="hand-data-row">
-                <span className="hand-data-label">indexAngle1</span>
+                <span className="hand-data-label">Angle 1</span>
                 <span className="hand-data-value">{handState.indexAngle1 ?? 'null'}</span>
               </div>
               <div className="hand-data-row">
-                <span className="hand-data-label">indexAngle2</span>
+                <span className="hand-data-label">Angle 2</span>
                 <span className="hand-data-value">{handState.indexAngle2 ?? 'null'}</span>
               </div>
               <div className="hand-data-separator">Middle</div>
               <div className="hand-data-row">
-                <span className="hand-data-label">middleAngle1</span>
+                <span className="hand-data-label">Angle 1</span>
                 <span className="hand-data-value">{handState.middleAngle1 ?? 'null'}</span>
               </div>
               <div className="hand-data-row">
-                <span className="hand-data-label">middleAngle2</span>
+                <span className="hand-data-label">Angle 2</span>
                 <span className="hand-data-value">{handState.middleAngle2 ?? 'null'}</span>
               </div>
               <div className="hand-data-separator">Ring</div>
               <div className="hand-data-row">
-                <span className="hand-data-label">ringAngle1</span>
+                <span className="hand-data-label">Angle 1</span>
                 <span className="hand-data-value">{handState.ringAngle1 ?? 'null'}</span>
               </div>
               <div className="hand-data-row">
-                <span className="hand-data-label">ringAngle2</span>
+                <span className="hand-data-label">Angle 2</span>
                 <span className="hand-data-value">{handState.ringAngle2 ?? 'null'}</span>
               </div>
               <div className="hand-data-separator">Video</div>
               <div className="hand-data-row">
-                <span className="hand-data-label">videoUrl</span>
+                <span className="hand-data-label">URL</span>
                 <span className="hand-data-value meta">
                   {handState.videoUrl ? (
                     <a href={handState.videoUrl} target="_blank" rel="noopener noreferrer" className="hand-data-link">
@@ -385,11 +385,11 @@ export function VoiceChat() {
               </div>
               <div className="hand-data-separator">Timestamp</div>
               <div className="hand-data-row">
-                <span className="hand-data-label">timestamp</span>
+                <span className="hand-data-label">Epoch</span>
                 <span className="hand-data-value meta">{handState.timestamp}</span>
               </div>
               <div className="hand-data-row">
-                <span className="hand-data-label">createdAt</span>
+                <span className="hand-data-label">Created At</span>
                 <span className="hand-data-value meta">{handState.createdAt ?? 'null'}</span>
               </div>
             </div>
