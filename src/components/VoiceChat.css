@@ -267,6 +267,13 @@
   text-transform: uppercase;
 }
 
+.signed-letter-latest {
+  background: rgba(0, 229, 255, 0.25);
+  border-color: #00e5ff;
+  color: #00e5ff;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+}
+
 .signed-letter-break {
   width: 100%;
   height: 1px;

@@ -312,9 +312,6 @@ export function VoiceChat({ signOut, userLogin }: VoiceChatProps) {
           <h1>Amazing Hand</h1>
           <span className="app-subtitle">ASL Sign Translator</span>
         </div>
-        <div className="current-letter">
-          {handState?.letter || ''}
-        </div>
         <div className="user-info">
           <span>{userLogin}</span>
           <button onClick={signOut} className="sign-out-btn">Sign out</button>
@@ -326,13 +323,19 @@ export function VoiceChat({ signOut, userLogin }: VoiceChatProps) {
           <div className="signed-history-header">Signed Letters</div>
           {signedLetters.length > 0 ? (
             <div className="signed-history-letters">
-              {signedLetters.map((entry, i) =>
-                entry.letter === '\n' ? (
-                  <div key={i} className="signed-letter-break" />
-                ) : (
-                  <span key={i} className="signed-letter">{entry.letter}</span>
-                )
-              )}
+              {(() => {
+                let lastLetterIdx = -1;
+                for (let i = signedLetters.length - 1; i >= 0; i--) {
+                  if (signedLetters[i].letter !== '\n') { lastLetterIdx = i; break; }
+                }
+                return signedLetters.map((entry, i) =>
+                  entry.letter === '\n' ? (
+                    <div key={i} className="signed-letter-break" />
+                  ) : (
+                    <span key={i} className={`signed-letter${i === lastLetterIdx ? ' signed-letter-latest' : ''}`}>{entry.letter}</span>
+                  )
+                );
+              })()}
             </div>
           ) : (
             <div className="signed-history-empty">No letters signed yet</div>
