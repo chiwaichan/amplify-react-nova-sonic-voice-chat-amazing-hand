@@ -139,7 +139,7 @@ export function VoiceChat({ signOut, userLogin }: VoiceChatProps) {
         console.log('[VoiceChat] Session timed out (idle). Click mic to reconnect.');
         setStatusText('Session timed out. Click mic to reconnect.');
       } else {
-        setStatusText(`Error: ${error}`);
+        setStatusText('Disconnected. Click mic to reconnect.');
       }
     },
     onToolUse: handleToolUse,
@@ -200,7 +200,7 @@ export function VoiceChat({ signOut, userLogin }: VoiceChatProps) {
     } else if (sessionState === 'connecting') {
       setStatusText('Connecting...');
     } else if (sessionState === 'error') {
-      setStatusText('Connection error. Click mic to reconnect.');
+      setStatusText('Disconnected. Click mic to reconnect.');
     } else if (isRecording) {
       setStatusText('Listening... (click mic to send)');
     } else if (isPlaying) {
@@ -276,7 +276,7 @@ export function VoiceChat({ signOut, userLogin }: VoiceChatProps) {
       case 'connecting':
         return 'status-indicator connecting';
       case 'error':
-        return 'status-indicator error';
+        return 'status-indicator disconnected';
       default:
         return 'status-indicator disconnected';
     }
@@ -450,13 +450,19 @@ export function VoiceChat({ signOut, userLogin }: VoiceChatProps) {
         <div className="status-bar">
           <span className={getStatusIndicatorClass()}></span>
           <span className="status-text">
-            Nova Sonic: {sessionState === 'connected' ? 'Connected' : sessionState}
+            Nova Sonic: {sessionState === 'connected' ? 'Connected' : sessionState === 'error' ? 'Disconnected' : sessionState}
           </span>
         </div>
 
         <div className="iot-info">
-          <span>Endpoint: {iotEndpoint}</span>
-          <span>Topic: {IOT_TOPIC}</span>
+          <div className="hand-data-row">
+            <span className="hand-data-label">Endpoint</span>
+            <span className="hand-data-value meta">{iotEndpoint}</span>
+          </div>
+          <div className="hand-data-row">
+            <span className="hand-data-label">Topic</span>
+            <span className="hand-data-value meta">{IOT_TOPIC}</span>
+          </div>
         </div>
 
         <div className="transcript-area" ref={transcriptRef}>
