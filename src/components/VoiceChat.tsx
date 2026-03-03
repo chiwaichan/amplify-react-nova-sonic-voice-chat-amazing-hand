@@ -400,8 +400,11 @@ export function VoiceChat() {
       </div>
 
       <div className="center-panel">
-        <div className="hand-stream-status">
-          Hand Stream: {isHandStreamConnected ? 'Connected' : 'Disconnected'}
+        <div className="status-bar">
+          <span className={`status-indicator ${isHandStreamConnected ? 'connected' : 'disconnected'}`}></span>
+          <span className="status-text">
+            Hand Stream: {isHandStreamConnected ? 'Connected' : 'Disconnected'}
+          </span>
         </div>
 
         <HandAnimation fingerAngles={fingerAngles} />
