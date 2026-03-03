@@ -313,7 +313,6 @@ export function VoiceChat({ signOut, userLogin }: VoiceChatProps) {
           <span className="app-subtitle">A real-time voice-to-sign language translator that listens to your speech, translates non-English to English, and instructs a robotic hand to fingerspell your words in American Sign Language.</span>
         </div>
         <div className="user-info">
-          <span>{userLogin}</span>
           <button onClick={signOut} className="sign-out-btn">Sign out</button>
         </div>
       </header>

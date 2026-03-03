@@ -2,6 +2,8 @@
 
 A real-time voice-to-sign language translator that listens to your speech, cleans it up into clear sentences, automatically translates non-English languages into English, and instructs a robotic hand to physically fingerspell your words in American Sign Language — while showing a live 3D animation, video feed of the real hand, and a running history of every letter signed.
 
+![UI Screenshot](ui.png)
+
 ## Architecture Overview
 
 ![Architecture Diagram](generated-diagrams/architecture-diagram.png)
