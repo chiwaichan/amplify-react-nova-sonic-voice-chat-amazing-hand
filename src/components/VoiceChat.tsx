@@ -309,8 +309,8 @@ export function VoiceChat({ signOut, userLogin }: VoiceChatProps) {
     <>
       <header className="app-header">
         <div className="app-brand">
-          <h1>Amazing Hand</h1>
-          <span className="app-subtitle">ASL Sign Translator</span>
+          <h1>Amazon Nova 2 Sonic to Seeed Studio Pollen Robotics Amazing Hand</h1>
+          <span className="app-subtitle">A real-time voice-to-sign language translator that listens to your speech, translates non-English to English, and instructs a robotic hand to fingerspell your words in American Sign Language.</span>
         </div>
         <div className="user-info">
           <span>{userLogin}</span>
