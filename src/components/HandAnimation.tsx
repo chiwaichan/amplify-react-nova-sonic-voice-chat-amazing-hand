@@ -217,12 +217,16 @@ export function HandAnimation({ currentPose, fingerAngles }: HandAnimationProps)
       if (mountRef.current) {
         const w = mountRef.current.clientWidth;
         const h = mountRef.current.clientHeight;
-        camera.aspect = w / h;
-        camera.updateProjectionMatrix();
-        renderer.setSize(w, h);
+        if (w > 0 && h > 0) {
+          camera.aspect = w / h;
+          camera.updateProjectionMatrix();
+          renderer.setSize(w, h);
+        }
       }
     };
-    window.addEventListener('resize', handleResize);
+
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(mountRef.current);
     handleResize();
 
     // Lighting — enhanced for metallic materials
@@ -261,7 +265,7 @@ export function HandAnimation({ currentPose, fingerAngles }: HandAnimationProps)
     animate();
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
