@@ -25,10 +25,9 @@ let actionIdCounter = 0;
 
 interface VoiceChatProps {
   signOut?: () => void;
-  userLogin?: string;
 }
 
-export function VoiceChat({ signOut, userLogin }: VoiceChatProps) {
+export function VoiceChat({ signOut }: VoiceChatProps) {
   const [statusText, setStatusText] = useState('Click mic to start talking');
   const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
   const [iotEndpoint, setIotEndpoint] = useState<string>('resolving...');

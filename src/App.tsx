@@ -6,10 +6,10 @@ import { VoiceChat } from './components/VoiceChat'
 function App() {
   return (
     <Authenticator>
-      {({ signOut, user }) => (
+      {({ signOut }) => (
         <div className="app-container">
           <main className="app-main">
-            <VoiceChat signOut={signOut} userLogin={user?.signInDetails?.loginId} />
+            <VoiceChat signOut={signOut} />
           </main>
         </div>
       )}
