@@ -439,7 +439,7 @@ export function VoiceChat({ signOut }: VoiceChatProps) {
               controls
             />
           ) : (
-            <div className="video-placeholder">No video available</div>
+            <div className="video-placeholder"><strong style={{ fontSize: '1.5em' }}>Video will play after the ASL signs are complete</strong></div>
           )}
         </div>
       </div>
