@@ -198,8 +198,8 @@ The robotic hand uses 8 servos (2 per finger: proximal and distal). Angles map f
 The application includes predefined servo positions for:
 
 - **26 alphabet letters** (A–Z) — Single right-hand poses for fingerspelling
-- **24 common words** — Multi-pose sequences including: hello, hi, yes, no, thanks, please, sorry, good, bad, help, love, friend, family, name, more, done, want, welcome, and others
-- **7 gestures** — thumbs_up, wave (5-pose sequence), point, open, close, peace
+- **28 common words** — Multi-pose sequences including: hello, hi, yes, no, thanks, thank you, please, help, sorry, love, i love you, good, bad, stop, go, eat, drink, water, friend, family, happy, sad, name, more, done, want, like, welcome
+- **6 gestures** — thumbs_up, wave (5-pose sequence), point, open, close, peace
 
 Each pose specifies which hand(s) to use, 4 servo positions per hand (0–180°), and a hold duration in milliseconds.
 
