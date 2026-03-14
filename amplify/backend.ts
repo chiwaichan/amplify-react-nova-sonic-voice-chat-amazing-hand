@@ -21,7 +21,6 @@ backend.auth.resources.authenticatedUserIamRole.addToPrincipalPolicy(
       'bedrock:InvokeModel',
     ],
     resources: [
-      'arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-sonic-v1:0',
       'arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-2-sonic-v1:0',
     ],
   })

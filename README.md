@@ -1,6 +1,8 @@
 # Amazon Nova 2 Sonic to Seeed Studio Pollen Robotics Amazing Hand
 
-A real-time voice-to-sign language translator that listens to your speech, cleans it up into clear sentences, automatically translates non-English languages into English, and instructs a robotic hand to physically fingerspell your words in American Sign Language — while showing a live 3D animation, video feed of the real hand, and a running history of every letter signed.
+> **Model:** Amazon Nova 2 Sonic (`amazon.nova-2-sonic-v1:0`) on Amazon Bedrock — bidirectional speech-to-speech streaming with tool use
+
+A real-time voice-to-sign language translator powered by **Amazon Nova 2 Sonic** that listens to your speech, cleans it up into clear sentences, automatically translates non-English languages into English, and instructs a robotic hand to physically fingerspell your words in American Sign Language — while showing a live 3D animation, video feed of the real hand, and a running history of every letter signed.
 
 ![UI Screenshot](ui.png)
 
@@ -36,7 +38,7 @@ A real-time voice-to-sign language translator that listens to your speech, clean
 
 | Service | Actions | Resource |
 |---------|---------|----------|
-| Amazon Bedrock | `bedrock:InvokeModel`, `bedrock:InvokeModelWithResponseStream` | `arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-sonic-v1:0`, `arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-2-sonic-v1:0` |
+| Amazon Bedrock | `bedrock:InvokeModel`, `bedrock:InvokeModelWithResponseStream` | `arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-2-sonic-v1:0` |
 | AWS IoT Core | `iot:Publish`, `iot:Connect` | `arn:aws:iot:us-east-1:{ACCOUNT_ID}:topic/the-project/robotic-hand/*`, `arn:aws:iot:us-east-1:{ACCOUNT_ID}:client/*` |
 | AWS IoT Core | `iot:DescribeEndpoint`, `iot:AttachPolicy` | `*` (account-level) |
 
@@ -211,7 +213,7 @@ The interface is a fullscreen three-column layout locked to viewport height:
 |--------|-------|----------|
 | Left (Data) | 30% | Signed Letters history (40%), Hand State raw data grid (60%) |
 | Center (Visualization) | 40% | Hand Stream status bar, 3D hand animation (50%), video player (50%) |
-| Right (Voice Chat) | 30% | Nova Sonic status bar, IoT endpoint/topic info, transcript feed, microphone button with level bar |
+| Right (Voice Chat) | 30% | Nova 2 Sonic status bar, IoT endpoint/topic info, transcript feed, microphone button with level bar |
 
 On screens narrower than 1100px, the layout collapses to a single stacked column.
 
