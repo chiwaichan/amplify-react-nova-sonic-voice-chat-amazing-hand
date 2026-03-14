@@ -6,6 +6,8 @@ A real-time voice-to-sign language translator powered by **Amazon Nova 2 Sonic**
 
 ![UI Screenshot](ui.png)
 
+![Pollen Robotics Amazing Hand](amazing-hand.jpeg)
+
 ## Architecture Overview
 
 ![Architecture Diagram](generated-diagrams/architecture-diagram.png)
