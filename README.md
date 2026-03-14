@@ -8,6 +8,16 @@ A real-time voice-to-sign language translator powered by **Amazon Nova 2 Sonic**
 
 ![Pollen Robotics Amazing Hand](amazing-hand.jpeg)
 
+## Related Repositories
+
+This project is one of three repositories that together form the end-to-end voice-controlled robotic hand signing system:
+
+| Repository | Purpose |
+|------------|---------|
+| [amplify-react-nova-sonic-voice-chat-amazing-hand](https://github.com/chiwaichan/amplify-react-nova-sonic-voice-chat-amazing-hand) | **Frontend & Voice Processing (this repo)** — React web app that captures speech via Amazon Nova 2 Sonic, publishes servo commands over MQTT, and displays a live 3D hand animation with real-time state updates |
+| [cdk-iot-amazing-hand-streaming](https://github.com/chiwaichan/cdk-iot-amazing-hand-streaming) | **IoT-to-AppSync Infrastructure** — AWS CDK stack that routes robotic hand state data from AWS IoT Core through Lambda to AppSync, enabling real-time GraphQL subscriptions for clients |
+| [strands-agents-amazing-hands](https://github.com/chiwaichan/strands-agents-amazing-hands) | **Edge AI Agent** — Strands Agent running on NVIDIA Jetson that receives MQTT commands, uses Amazon Nova 2 Lite to translate them into servo movements for the physical Amazing Hand, records video, and publishes state back via IoT Core |
+
 ## Architecture Overview
 
 ![Architecture Diagram](generated-diagrams/architecture-diagram.png)
