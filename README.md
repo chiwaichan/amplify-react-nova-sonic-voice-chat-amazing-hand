@@ -8,6 +8,10 @@ A real-time voice-to-sign language translator powered by **Amazon Nova 2 Sonic**
 
 ![Pollen Robotics Amazing Hand](amazing-hand.jpeg)
 
+## Demo Video
+
+[![Watch the demo on YouTube](https://img.youtube.com/vi/MYzz_dtUJJs/0.jpg)](https://www.youtube.com/watch?v=MYzz_dtUJJs)
+
 ## Related Repositories
 
 This project is one of three repositories that together form the end-to-end voice-controlled robotic hand signing system. Each repo has an accompanying blog post that walks through the design and implementation.
